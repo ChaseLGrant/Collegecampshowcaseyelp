@@ -1,54 +1,66 @@
--- CampGrade core schema
+-- CampGrade core schema (plain PostgreSQL; ported from Supabase).
 -- Directory, provenance, ingestion, community reviews, external reviews,
 -- research summaries, plans, subscriptions and entitlements.
--- All tables use RLS. The service role (server only) bypasses RLS, so extra
--- triggers protect community review content from automated writes.
+--
+-- Authorization is enforced in server code (src/lib/server/auth.ts: requireUser /
+-- requireStaff, plus owner checks in every write). The database keeps one hard
+-- guarantee of its own: community review CONTENT can only be written inside a
+-- transaction that has set app.user_id to the review's author (see
+-- reviews_content_guard), so ingestion/admin code can never fabricate or alter it.
 
 create extension if not exists pgcrypto;
 create extension if not exists pg_trgm;
 
 -- ---------------------------------------------------------------------------
--- Profiles and roles
+-- Users (app-owned; replaces the Supabase auth schema) and roles
 -- ---------------------------------------------------------------------------
+create table public.users (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  email_verified_at timestamptz,
+  password_hash text,                    -- bcrypt; null for Google-only accounts
+  name text check (char_length(name) <= 100),
+  image text,
+  created_at timestamptz not null default now(),
+  last_sign_in_at timestamptz
+);
+create unique index users_email_lower_idx on public.users (lower(email));
+
+-- Linked OAuth identities (Google). One row per provider account.
+create table public.user_accounts (
+  provider text not null,
+  provider_account_id text not null,
+  user_id uuid not null references public.users (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (provider, provider_account_id)
+);
+create index user_accounts_user_idx on public.user_accounts (user_id);
+
 create table public.profiles (
-  id uuid primary key references auth.users (id) on delete cascade,
+  id uuid primary key references public.users (id) on delete cascade,
   display_name text check (char_length(display_name) <= 60),
+  -- Roles are set by SQL only, e.g.:
+  --   update profiles set role = 'admin' where id = (select id from users where lower(email) = lower('you@example.com'));
   role text not null default 'user' check (role in ('user', 'moderator', 'admin')),
   age_confirmed_at timestamptz,          -- reviewer confirmed 18+
   created_at timestamptz not null default now()
 );
 
 create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer set search_path = public as $$
+returns trigger language plpgsql as $$
 begin
   insert into public.profiles (id) values (new.id) on conflict do nothing;
   return new;
 end $$;
 
-create trigger on_auth_user_created
-  after insert on auth.users for each row execute function public.handle_new_user();
+create trigger on_user_created
+  after insert on public.users for each row execute function public.handle_new_user();
 
-create or replace function public.is_admin()
-returns boolean language sql stable security definer set search_path = public as $$
-  select exists (select 1 from public.profiles where id = auth.uid() and role = 'admin');
+-- The acting user for the current transaction (the app sets it with set_config('app.user_id', <id>, true)).
+create or replace function public.app_user_id()
+returns uuid language sql stable as $$
+  select nullif(current_setting('app.user_id', true), '')::uuid;
 $$;
-
-create or replace function public.is_moderator()
-returns boolean language sql stable security definer set search_path = public as $$
-  select exists (select 1 from public.profiles where id = auth.uid() and role in ('admin', 'moderator'));
-$$;
-
--- Users can read/update their own profile, but never change their own role.
-create or replace function public.prevent_role_self_escalation()
-returns trigger language plpgsql as $$
-begin
-  if new.role is distinct from old.role and not public.is_admin() and auth.uid() is not null then
-    raise exception 'Only admins can change roles';
-  end if;
-  return new;
-end $$;
-create trigger profiles_role_guard before update on public.profiles
-  for each row execute function public.prevent_role_self_escalation();
 
 -- ---------------------------------------------------------------------------
 -- Directory: institutions, organizers, camps
@@ -99,7 +111,7 @@ create table public.sources (
   next_run_at timestamptz,
   last_status text,
   consecutive_failures int not null default 0,
-  created_by uuid references auth.users (id),
+  created_by uuid references public.users (id),
   created_at timestamptz not null default now()
 );
 
@@ -208,7 +220,7 @@ create table public.discovery_queue (
   kind text not null default 'camp' check (kind in ('camp', 'camp_update')),
   source_id uuid references public.sources (id) on delete set null,
   run_id uuid references public.ingestion_runs (id) on delete set null,
-  submitted_by uuid references auth.users (id),
+  submitted_by uuid references public.users (id),
   candidate jsonb not null,                 -- normalized candidate (see src/lib/ingestion/types.ts)
   source_url text,
   fingerprint text not null,
@@ -216,7 +228,7 @@ create table public.discovery_queue (
   matched_camp_id uuid references public.camps (id) on delete set null,
   duplicate_score numeric(3, 2),
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected', 'duplicate')),
-  reviewer_id uuid references auth.users (id),
+  reviewer_id uuid references public.users (id),
   reviewed_at timestamptz,
   notes text,
   created_at timestamptz not null default now()
@@ -230,7 +242,7 @@ create unique index discovery_queue_pending_fingerprint on public.discovery_queu
 create table public.reviews (
   id uuid primary key default gen_random_uuid(),
   camp_id uuid not null references public.camps (id) on delete cascade,
-  user_id uuid not null references auth.users (id) on delete cascade,
+  user_id uuid not null references public.users (id) on delete cascade,
   attendee_role text not null check (attendee_role in ('parent', 'athlete', 'coach', 'other')),
   attended_year int check (attended_year between 2000 and 2100),
   rating_value smallint not null check (rating_value between 1 and 5),
@@ -261,7 +273,7 @@ create or replace function public.reviews_content_guard()
 returns trigger language plpgsql as $$
 begin
   if tg_op = 'INSERT' then
-    if auth.uid() is null or auth.uid() <> new.user_id then
+    if public.app_user_id() is null or public.app_user_id() <> new.user_id then
       raise exception 'Community reviews can only be created by their author';
     end if;
     return new;
@@ -274,7 +286,7 @@ begin
       old.rating_organization, old.rating_overall, old.camp_id, old.user_id, old.attendee_role,
       old.attended_year, old.would_recommend)
   then
-    if auth.uid() is null or auth.uid() <> old.user_id then
+    if public.app_user_id() is null or public.app_user_id() <> old.user_id then
       raise exception 'Review content can only be edited by its author';
     end if;
     new.status := 'pending';  -- edits go back through moderation
@@ -288,7 +300,7 @@ create trigger reviews_content_guard before insert or update on public.reviews
 create table public.review_reports (
   id uuid primary key default gen_random_uuid(),
   review_id uuid not null references public.reviews (id) on delete cascade,
-  reporter_id uuid not null references auth.users (id) on delete cascade,
+  reporter_id uuid not null references public.users (id) on delete cascade,
   reason text not null check (reason in ('spam', 'fake', 'offensive', 'conflict_of_interest', 'other')),
   details text check (char_length(details) <= 1000),
   resolved boolean not null default false,
@@ -297,7 +309,7 @@ create table public.review_reports (
 );
 
 -- Native rating aggregates (published community reviews only).
-create view public.camp_rating_stats with (security_invoker = true) as
+create view public.camp_rating_stats as
 select
   camp_id,
   count(*)::int as review_count,
@@ -340,14 +352,14 @@ create table public.external_reviews (
   match_method text,
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
   imported_at timestamptz not null default now(),
-  reviewed_by uuid references auth.users (id),
+  reviewed_by uuid references public.users (id),
   reviewed_at timestamptz,
   check (camp_id is not null or organizer_id is not null)
 );
 create index external_reviews_camp_idx on public.external_reviews (camp_id, status);
 
 -- Public-safe projection: non-permitted fields are nulled in the database itself.
--- Runs with the view owner's rights (not security_invoker) so the raw table can stay admin-only.
+-- Public pages read ONLY this view, never the raw table.
 create view public.external_reviews_public as
 select
   id, camp_id, organizer_id, platform_name, source_url, provenance_type, referenced_name, sport,
@@ -373,7 +385,7 @@ create table public.research_summaries (
   access_tier text not null default 'insider' check (access_tier in ('free', 'insider', 'elite')),
   status text not null default 'draft' check (status in ('draft', 'approved', 'rejected')),
   generated_at timestamptz not null default now(),
-  reviewed_by uuid references auth.users (id),
+  reviewed_by uuid references public.users (id),
   reviewed_at timestamptz,
   review_notes text
 );
@@ -400,14 +412,14 @@ create table public.plans (
 );
 
 create table public.billing_customers (
-  user_id uuid primary key references auth.users (id) on delete cascade,
+  user_id uuid primary key references public.users (id) on delete cascade,
   stripe_customer_id text not null unique,
   created_at timestamptz not null default now()
 );
 
 create table public.subscriptions (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users (id) on delete cascade,
+  user_id uuid not null references public.users (id) on delete cascade,
   plan_id text not null references public.plans (id),
   provider text not null check (provider in ('stripe', 'athlete_market', 'admin')),
   external_id text not null,                -- stripe subscription id / TAM subscription ref / admin grant id
@@ -421,7 +433,7 @@ create table public.subscriptions (
 
 create table public.entitlements (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users (id) on delete cascade,
+  user_id uuid not null references public.users (id) on delete cascade,
   plan_id text not null references public.plans (id),
   source text not null check (source in ('stripe', 'athlete_market', 'admin')),
   source_ref text not null,
@@ -435,7 +447,7 @@ create table public.entitlements (
 create index entitlements_user_idx on public.entitlements (user_id);
 
 create table public.athlete_market_links (
-  user_id uuid primary key references auth.users (id) on delete cascade,
+  user_id uuid primary key references public.users (id) on delete cascade,
   athlete_market_account_id text not null unique,
   linked_at timestamptz not null default now(),
   last_synced_at timestamptz,
@@ -444,7 +456,7 @@ create table public.athlete_market_links (
 
 create table public.oauth_states (
   state text primary key,
-  user_id uuid not null references auth.users (id) on delete cascade,
+  user_id uuid not null references public.users (id) on delete cascade,
   provider text not null,
   code_verifier text not null,
   expires_at timestamptz not null,
@@ -474,7 +486,7 @@ $$;
 -- ---------------------------------------------------------------------------
 create table public.saved_lists (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users (id) on delete cascade,
+  user_id uuid not null references public.users (id) on delete cascade,
   name text not null check (char_length(name) between 1 and 80),
   created_at timestamptz not null default now()
 );
@@ -488,7 +500,7 @@ create table public.saved_list_items (
 );
 
 create table public.match_profiles (
-  user_id uuid primary key references auth.users (id) on delete cascade,
+  user_id uuid primary key references public.users (id) on delete cascade,
   sport text not null,
   position text,
   grad_year int,
@@ -502,7 +514,7 @@ create table public.match_profiles (
 
 create table public.audit_log (
   id bigserial primary key,
-  actor_id uuid references auth.users (id),
+  actor_id uuid references public.users (id),
   action text not null,
   entity text not null,
   entity_id text,
@@ -511,9 +523,9 @@ create table public.audit_log (
 );
 
 -- ---------------------------------------------------------------------------
--- Directory view used by search (RLS of underlying tables applies)
+-- Directory view used by search
 -- ---------------------------------------------------------------------------
-create view public.camp_directory with (security_invoker = true) as
+create view public.camp_directory as
 select
   c.id, c.slug, c.name, c.sport, c.sport_detail, c.event_type, c.city, c.state, c.venue,
   c.start_date, c.end_date, c.price_cents, c.price_notes, c.registration_url, c.description,
@@ -532,119 +544,3 @@ from public.camps c
 left join public.institutions i on i.id = c.institution_id
 left join public.organizers o on o.id = c.organizer_id
 left join public.camp_rating_stats s on s.camp_id = c.id;
-
--- ---------------------------------------------------------------------------
--- Row level security
--- ---------------------------------------------------------------------------
-alter table public.profiles enable row level security;
-alter table public.institutions enable row level security;
-alter table public.organizers enable row level security;
-alter table public.sources enable row level security;
-alter table public.camps enable row level security;
-alter table public.camp_participating_colleges enable row level security;
-alter table public.camp_coaches enable row level security;
-alter table public.camp_field_provenance enable row level security;
-alter table public.ingestion_runs enable row level security;
-alter table public.discovery_queue enable row level security;
-alter table public.reviews enable row level security;
-alter table public.review_reports enable row level security;
-alter table public.external_reviews enable row level security;
-alter table public.research_summaries enable row level security;
-alter table public.plans enable row level security;
-alter table public.billing_customers enable row level security;
-alter table public.subscriptions enable row level security;
-alter table public.entitlements enable row level security;
-alter table public.athlete_market_links enable row level security;
-alter table public.oauth_states enable row level security;
-alter table public.stripe_events enable row level security;
-alter table public.saved_lists enable row level security;
-alter table public.saved_list_items enable row level security;
-alter table public.match_profiles enable row level security;
-alter table public.audit_log enable row level security;
-
--- Profiles
-create policy profiles_self_read on public.profiles for select using (id = auth.uid() or public.is_moderator());
-create policy profiles_self_update on public.profiles for update using (id = auth.uid() or public.is_admin());
-
--- Public directory data
-create policy institutions_public_read on public.institutions for select using (true);
-create policy institutions_admin_write on public.institutions for all using (public.is_admin()) with check (public.is_admin());
-create policy organizers_public_read on public.organizers for select using (true);
-create policy organizers_admin_write on public.organizers for all using (public.is_admin()) with check (public.is_admin());
-create policy camps_public_read on public.camps for select using (status in ('published', 'cancelled') or public.is_admin());
-create policy camps_admin_write on public.camps for all using (public.is_admin()) with check (public.is_admin());
-create policy cpc_public_read on public.camp_participating_colleges for select using (true);
-create policy cpc_admin_write on public.camp_participating_colleges for all using (public.is_admin()) with check (public.is_admin());
-create policy coaches_public_read on public.camp_coaches for select using (true);
-create policy coaches_admin_write on public.camp_coaches for all using (public.is_admin()) with check (public.is_admin());
-create policy provenance_public_read on public.camp_field_provenance for select using (true);
-
--- Admin-only operational data
-create policy sources_admin on public.sources for all using (public.is_admin()) with check (public.is_admin());
-create policy runs_admin on public.ingestion_runs for all using (public.is_admin()) with check (public.is_admin());
-create policy queue_admin on public.discovery_queue for all using (public.is_admin()) with check (public.is_admin());
-create policy queue_submitter_read on public.discovery_queue for select using (submitted_by = auth.uid());
-create policy audit_admin on public.audit_log for select using (public.is_admin());
-create policy stripe_events_none on public.stripe_events for select using (public.is_admin());
-create policy oauth_states_none on public.oauth_states for select using (false);
-
--- Community reviews
-create policy reviews_public_read on public.reviews for select
-  using (status = 'published' or user_id = auth.uid() or public.is_moderator());
-create policy reviews_author_insert on public.reviews for insert
-  with check (user_id = auth.uid() and status in ('pending', 'published') and verification in ('unverified', 'pending'));
-create policy reviews_author_update on public.reviews for update using (user_id = auth.uid() or public.is_moderator());
-create policy reviews_author_delete on public.reviews for delete using (user_id = auth.uid() or public.is_admin());
--- Hide moderation internals from the public API (column-level grants).
-revoke select on public.reviews from anon, authenticated;
-grant select (id, camp_id, user_id, attendee_role, attended_year, rating_value, rating_instruction,
-  rating_exposure, rating_organization, rating_overall, title, body, would_recommend, verification,
-  status, created_at, updated_at) on public.reviews to anon, authenticated;
-
-create policy reports_insert on public.review_reports for insert with check (reporter_id = auth.uid());
-create policy reports_mod_read on public.review_reports for select using (public.is_moderator() or reporter_id = auth.uid());
-create policy reports_mod_update on public.review_reports for update using (public.is_moderator());
-
--- External reviews: raw table admin-only; public reads go through external_reviews_public.
-create policy external_reviews_admin on public.external_reviews for all using (public.is_admin()) with check (public.is_admin());
-revoke all on public.external_reviews from anon;
-grant select on public.external_reviews_public to anon, authenticated;
-
--- Research summaries: approved summaries readable at the caller's tier.
-create policy research_read on public.research_summaries for select using (
-  public.is_admin() or (status = 'approved' and (
-    access_tier = 'free'
-    or (access_tier = 'insider' and public.current_tier(auth.uid()) in ('insider', 'elite'))
-    or (access_tier = 'elite' and public.current_tier(auth.uid()) = 'elite'))));
-create policy research_admin_write on public.research_summaries for all using (public.is_admin()) with check (public.is_admin());
-
--- Plans are public (pricing page); only admins edit.
-create policy plans_public_read on public.plans for select using (active or public.is_admin());
-create policy plans_admin_write on public.plans for all using (public.is_admin()) with check (public.is_admin());
-
--- Billing & entitlements: users read their own; writes happen server-side (service role).
-create policy billing_self on public.billing_customers for select using (user_id = auth.uid() or public.is_admin());
-create policy subs_self on public.subscriptions for select using (user_id = auth.uid() or public.is_admin());
-create policy ent_self on public.entitlements for select using (user_id = auth.uid() or public.is_admin());
-create policy ent_admin_write on public.entitlements for all using (public.is_admin()) with check (public.is_admin());
-create policy tam_self on public.athlete_market_links for select using (user_id = auth.uid() or public.is_admin());
-
--- Saved lists and match profiles: owner only.
-create policy lists_owner on public.saved_lists for all using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy list_items_owner on public.saved_list_items for all
-  using (exists (select 1 from public.saved_lists l where l.id = list_id and l.user_id = auth.uid()))
-  with check (exists (select 1 from public.saved_lists l where l.id = list_id and l.user_id = auth.uid()));
-create policy match_owner on public.match_profiles for all using (user_id = auth.uid()) with check (user_id = auth.uid());
-
--- ---------------------------------------------------------------------------
--- Storage: private bucket for optional attendance proof uploads
--- ---------------------------------------------------------------------------
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('attendance-proofs', 'attendance-proofs', false, 5242880,
-        array['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
-on conflict (id) do nothing;
-
-create policy attendance_upload_own on storage.objects for insert to authenticated
-  with check (bucket_id = 'attendance-proofs' and (storage.foldername(name))[1] = auth.uid()::text);
-create policy attendance_read_mod on storage.objects for select to authenticated
-  using (bucket_id = 'attendance-proofs' and ((storage.foldername(name))[1] = auth.uid()::text or public.is_moderator()));

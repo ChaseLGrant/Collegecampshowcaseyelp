@@ -1,7 +1,9 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { getServerSupabase, getServiceSupabase } from "../supabase/server";
+import { auth } from "@/auth";
+import { getSql, requireSql, type Sql } from "../db";
+import { authConfigured } from "../env";
 
 export interface SessionUser {
   id: string;
@@ -10,18 +12,18 @@ export interface SessionUser {
   ageConfirmed: boolean;
 }
 
+/** The signed-in user, verified against Postgres on every request (deleted users and role changes apply immediately). */
 export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
-  const db = await getServerSupabase();
-  if (!db) return null;
-  const { data } = await db.auth.getUser();
-  if (!data.user) return null;
-  const { data: profile } = await db.from("profiles").select("role,age_confirmed_at").eq("id", data.user.id).maybeSingle();
-  return {
-    id: data.user.id,
-    email: data.user.email ?? null,
-    role: (profile?.role as SessionUser["role"]) ?? "user",
-    ageConfirmed: Boolean(profile?.age_confirmed_at),
-  };
+  if (!authConfigured()) return null;
+  const session = await auth().catch(() => null);
+  const id = session?.user?.id;
+  if (!id || !/^[0-9a-f-]{36}$/i.test(id)) return null;
+  const sql = getSql();
+  if (!sql) return null;
+  const [row] = await sql<{ id: string; email: string; role: SessionUser["role"] | null; age_confirmed_at: string | null }[]>`
+    select u.id, u.email, p.role, p.age_confirmed_at from users u left join profiles p on p.id = u.id where u.id = ${id}`;
+  if (!row) return null;
+  return { id: row.id, email: row.email, role: row.role ?? "user", ageConfirmed: Boolean(row.age_confirmed_at) };
 });
 
 export async function requireUser(nextPath: string): Promise<SessionUser> {
@@ -30,19 +32,21 @@ export async function requireUser(nextPath: string): Promise<SessionUser> {
   return u;
 }
 
-/** For admin pages and actions. Returns the service client only after the role check passes. */
-export async function requireStaff(minRole: "moderator" | "admin" = "admin") {
+export function isStaff(u: SessionUser | null, minRole: "moderator" | "admin" = "admin"): boolean {
+  if (!u) return false;
+  return minRole === "moderator" ? u.role === "admin" || u.role === "moderator" : u.role === "admin";
+}
+
+/** For admin pages and actions. Returns the database handle only after the role check passes. */
+export async function requireStaff(minRole: "moderator" | "admin" = "admin"): Promise<{ user: SessionUser; db: Sql }> {
   const u = await getSessionUser();
   if (!u) redirect("/login?next=/admin");
-  const ok = minRole === "moderator" ? u.role === "admin" || u.role === "moderator" : u.role === "admin";
-  if (!ok) redirect("/");
-  const db = getServiceSupabase();
-  if (!db) throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for admin operations");
-  return { user: u, db };
+  if (!isStaff(u, minRole)) redirect("/");
+  return { user: u, db: requireSql() };
 }
 
 export async function audit(actorId: string | null, action: string, entity: string, entityId: string | null, details: Record<string, unknown> = {}) {
-  const db = getServiceSupabase();
-  if (!db) return;
-  await db.from("audit_log").insert({ actor_id: actorId, action, entity, entity_id: entityId, details });
+  const sql = getSql();
+  if (!sql) return;
+  await sql`insert into audit_log (actor_id, action, entity, entity_id, details) values (${actorId}, ${action}, ${entity}, ${entityId}, ${sql.json(details as never)})`;
 }

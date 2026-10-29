@@ -5,7 +5,8 @@ import { requireStaff } from "@/lib/server/auth";
 
 export default async function ImportPage() {
   const { db } = await requireStaff("admin");
-  const { data: sources } = await db.from("sources").select("id,name,content_rights,terms_reviewed_at").neq("adapter", "manual").order("name");
+  const sources = await db<{ id: string; name: string; content_rights: string; terms_reviewed_at: string | null }[]>`
+    select id, name, content_rights, terms_reviewed_at from sources where adapter <> 'manual' order by name`;
   const usable = (sources ?? []).filter((s) => s.terms_reviewed_at && !["unknown", "prohibited"].includes(s.content_rights));
   return (
     <div className="space-y-6">

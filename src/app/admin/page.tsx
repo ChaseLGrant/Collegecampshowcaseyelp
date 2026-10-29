@@ -4,18 +4,27 @@ import { formatDate } from "@/lib/format";
 
 export default async function AdminHome() {
   const { db, user } = await requireStaff("moderator");
-  const weekAgo = new Date(Date.now() - 7 * 86400_000).toISOString();
-  const head = { count: "exact" as const, head: true };
-  const [queue, pendingReviews, reports, proofs, stale, failed, ext, research] = await Promise.all([
-    db.from("discovery_queue").select("id", head).eq("status", "pending"),
-    db.from("reviews").select("id", head).eq("status", "pending"),
-    db.from("review_reports").select("id", head).eq("resolved", false),
-    db.from("reviews").select("id", head).eq("verification", "pending"),
-    db.from("camps").select("id", head).eq("verification_status", "stale").eq("status", "published"),
-    db.from("ingestion_runs").select("id,status,error,started_at,sources(name)").in("status", ["failed", "blocked"]).gte("started_at", weekAgo).order("started_at", { ascending: false }).limit(10),
-    db.from("external_reviews").select("id", head).eq("status", "pending"),
-    db.from("research_summaries").select("id", head).eq("status", "draft"),
+  const [[c], failedRows] = await Promise.all([
+    db<Record<string, number>[]>`
+      select
+        (select count(*)::int from discovery_queue where status = 'pending') as queue,
+        (select count(*)::int from reviews where status = 'pending') as pending_reviews,
+        (select count(*)::int from review_reports where not resolved) as reports,
+        (select count(*)::int from reviews where verification = 'pending') as proofs,
+        (select count(*)::int from camps where verification_status = 'stale' and status = 'published') as stale,
+        (select count(*)::int from external_reviews where status = 'pending') as ext,
+        (select count(*)::int from research_summaries where status = 'draft') as research,
+        (select count(*)::int from leads) as leads`,
+    db`
+      select r.id, r.status, r.error, r.started_at, case when s.id is null then null else json_build_object('name', s.name) end as sources
+      from ingestion_runs r left join sources s on s.id = r.source_id
+      where r.status in ('failed', 'blocked') and r.started_at >= now() - interval '7 days'
+      order by r.started_at desc limit 10`,
   ]);
+  const n = (count: number) => ({ count });
+  const [queue, pendingReviews, reports, proofs, stale, ext, research, leads] =
+    [c.queue, c.pending_reviews, c.reports, c.proofs, c.stale, c.ext, c.research, c.leads].map(n);
+  const failed = { data: failedRows };
   const tiles: [string, number | null, string, boolean][] = [
     ["Discovery queue", queue.count, "/admin/discovery", true],
     ["Reviews awaiting moderation", pendingReviews.count, "/admin/reviews", false],
@@ -24,6 +33,7 @@ export default async function AdminHome() {
     ["Stale listings", stale.count, "/admin/camps?filter=stale", true],
     ["External reviews pending", ext.count, "/admin/external-reviews", true],
     ["Research drafts", research.count, "/admin/research", true],
+    ["Leads", leads.count, "/admin/leads", true],
   ];
   type Run = { id: string; status: string; error: string | null; started_at: string; sources: { name: string } | null };
   return (

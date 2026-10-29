@@ -6,7 +6,7 @@ import { athleteMarketConfigured, stripeConfigured } from "@/lib/env";
 import { formatDate } from "@/lib/format";
 import { getCurrentAccess, getPlans } from "@/lib/server/access";
 import { requireUser } from "@/lib/server/auth";
-import { getServerSupabase } from "@/lib/supabase/server";
+import { requireSql } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -24,15 +24,27 @@ const TAM_MESSAGES: Record<string, string> = {
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ tam?: string; checkout?: string }> }) {
   const user = await requireUser("/account");
   const sp = await searchParams;
-  const db = (await getServerSupabase())!;
-  const [{ access }, plans, subs, link, lists, reviews] = await Promise.all([
+  const sql = requireSql();
+  // Every query is scoped to the signed-in user (formerly enforced by RLS).
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const [{ access }, plans, subsRows, linkRows, listRows, reviewRows] = await Promise.all([
     getCurrentAccess(),
     getPlans(),
-    db.from("subscriptions").select("plan_id,provider,status,current_period_end,cancel_at_period_end").eq("user_id", user.id),
-    db.from("athlete_market_links").select("status,linked_at,last_synced_at").eq("user_id", user.id).maybeSingle(),
-    db.from("saved_lists").select("id,name,saved_list_items(camp_id,camps(name,slug))").eq("user_id", user.id),
-    db.from("reviews").select("id,title,status,verification,created_at,camps(name,slug)").eq("user_id", user.id).order("created_at", { ascending: false }),
+    sql<any[]>`select plan_id, provider, status, current_period_end, cancel_at_period_end from subscriptions where user_id = ${user.id}`,
+    sql<any[]>`select status, linked_at, last_synced_at from athlete_market_links where user_id = ${user.id}`,
+    sql<any[]>`
+      select l.id, l.name, coalesce(json_agg(json_build_object('camp_id', i.camp_id, 'camps', json_build_object('name', c.name, 'slug', c.slug)))
+        filter (where i.camp_id is not null), '[]') as saved_list_items
+      from saved_lists l left join saved_list_items i on i.list_id = l.id left join camps c on c.id = i.camp_id
+      where l.user_id = ${user.id} group by l.id, l.name`,
+    sql<any[]>`
+      select r.id, r.title, r.status, r.verification, r.created_at, json_build_object('name', c.name, 'slug', c.slug) as camps
+      from reviews r join camps c on c.id = r.camp_id where r.user_id = ${user.id} order by r.created_at desc`,
   ]);
+  const subs = { data: subsRows };
+  const link = { data: linkRows[0] ?? null };
+  const lists = { data: listRows };
+  const reviews = { data: reviewRows };
   const planName = (id: string) => plans.find((p) => p.id === id)?.name ?? id;
   const tierPlan = plans.find((p) => p.tier === access.tier);
   type ListRow = { id: string; name: string; saved_list_items: { camp_id: string; camps: { name: string; slug: string } | null }[] };

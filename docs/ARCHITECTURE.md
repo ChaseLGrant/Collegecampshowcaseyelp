@@ -12,7 +12,11 @@ src/
     api/                     reviews, billing, Stripe webhook, Athlete Market, cron, v1 entitlements
   components/                UI (server components by default; client ones marked "use client")
   lib/
-    data/                    Repository: Supabase (live) or labeled sample/empty fallback
+    db/                      postgres.js pool + asUser() transactions
+    auth/                    Auth.js user helpers (bcrypt, Google linking); config in src/auth.ts
+    storage/                 Private S3-compatible proof storage (Railway bucket)
+    leads.ts                 Lead capture validation + CSV export
+    data/                    Repository: Postgres (live) or labeled sample/empty fallback
     ingestion/               robots, polite fetcher, adapters, normalize, dedupe, policy, pipeline
     external-reviews/        rights rules, matching, CSV import
     research/                fact builder, template + Claude drafting, citation validator
@@ -20,7 +24,8 @@ src/
     matching/ compare/       Premium logic (pure functions)
     reviews/                 validation + spam scoring
     seo/ security/ server/ actions/ admin/
-supabase/migrations/         Schema, RLS, triggers, views, seed plans
+db/migrations/               Plain-Postgres schema, triggers, views, seed plans, leads
+scripts/migrate.mjs          Applies migrations once each
 tests/                       Vitest unit tests
 ```
 
@@ -28,7 +33,8 @@ tests/                       Vitest unit tests
 | Rule | Where |
 |---|---|
 | Unreviewed camps never look highly rated | `ratings.ts` (`ratingDisplay`, `rankingScore`), `camp_directory.ranking_score`, filters skip unreviewed camps for min-rating |
-| Imports can't touch community reviews | `reviews_content_guard` trigger + test that scans ingestion code |
+| Imports can't touch community reviews | `reviews_content_guard` trigger (requires `app.user_id` = author, set by `asUser()`) + test that scans ingestion code |
+| Only staff reach admin | `requireStaff()` in every admin page/action/route (formerly RLS) + test that checks each one |
 | External content is shown only with rights | `external_reviews_public` view + `toPublicExternalReview` |
 | External ratings are never merged into native ones | `camp_rating_stats` reads only `reviews` |
 | AI research is never a review and must cite facts | `research_summaries` table, `validateAiOutput`, admin approval |

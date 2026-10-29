@@ -49,7 +49,7 @@ function SourceForm({ s }: { s?: any }) {
 
 export default async function SourcesPage() {
   const { db } = await requireStaff("admin");
-  const { data } = await db.from("sources").select("*").order("created_at", { ascending: false });
+  const data = await db`select * from sources order by created_at desc`;
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Source registry</h1>

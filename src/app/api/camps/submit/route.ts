@@ -4,7 +4,8 @@ import { prepareQueueItems } from "@/lib/ingestion/pipeline";
 import { clientIp, rateLimit } from "@/lib/security/rate-limit";
 import { safeHttpUrl } from "@/lib/security/urls";
 import { json, sameOrigin } from "@/lib/server/http";
-import { getServerSupabase, getServiceSupabase } from "@/lib/supabase/server";
+import { getSql } from "@/lib/db";
+import { getSessionUser } from "@/lib/server/auth";
 
 const schema = z.object({
   name: z.string().trim().min(3).max(200),
@@ -27,13 +28,13 @@ export async function POST(req: Request) {
   const d = parsed.data;
   if (d.website || (d.elapsedMs != null && d.elapsedMs < 3000)) return json({ ok: true }); // silently drop bots
   if (!safeHttpUrl(d.sourceUrl)) return json({ error: "Please use an http(s) link." }, 400);
-  const db = getServiceSupabase();
+  const db = getSql();
   if (!db) return json({ error: "Submissions open once the database is configured." }, 503);
 
-  const user = (await (await getServerSupabase())?.auth.getUser())?.data.user ?? null;
+  const user = await getSessionUser();
   const [city, state] = (d.location ?? "").split(",").map((s) => s.trim());
   const store = makeIngestionStore(db);
-  const { data: manual } = await db.from("sources").select("id").eq("kind", "manual").limit(1).maybeSingle();
+  const [manual] = await db<{ id: string }[]>`select id from sources where kind = 'manual' limit 1`;
   const runId = await store.startRun(manual?.id ?? null, "submission");
   const { items } = prepareQueueItems([{
     name: d.name, sport: d.sport, startDate: d.startDate, sourceUrl: d.sourceUrl, registrationUrl: d.sourceUrl,

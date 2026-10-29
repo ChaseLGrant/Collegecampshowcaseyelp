@@ -4,7 +4,7 @@ import { requireStaff } from "@/lib/server/auth";
 
 export default async function PlansAdmin() {
   const { db } = await requireStaff("admin");
-  const { data } = await db.from("plans").select("*").order("sort_order");
+  const data = await db`select * from plans order by sort_order`;
   const plans = (data ?? []).map(mapPlanRow);
   return (
     <div className="space-y-4">

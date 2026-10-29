@@ -3,14 +3,16 @@ import { CampCard } from "@/components/CampCard";
 import { SampleBanner } from "@/components/SampleBanner";
 import { SearchBar } from "@/components/SearchBar";
 import { SportChips } from "@/components/SportChips";
+import { LeadCaptureForm } from "@/components/LeadCaptureForm";
 import { getPublicRepository } from "@/lib/data";
+import { databaseConfigured } from "@/lib/env";
 import { parseSearchFilters } from "@/lib/search";
 import { getStickySport } from "@/lib/server/sticky-sport";
 import { DIRECTORY_SPORTS, SPORTS, directoryPath, sportLabel } from "@/lib/sports";
 
 export default async function HomePage() {
   const sport = await getStickySport();
-  const repo = getPublicRepository();
+  const repo = await getPublicRepository();
   const [upcoming, counts] = await Promise.all([
     repo.searchCamps(parseSearchFilters({ sort: "date", pageSize: "6" }, sport)),
     repo.countBySport(),
@@ -48,6 +50,12 @@ export default async function HomePage() {
         ) : (
           <p className="mt-4 muted">No upcoming events listed yet. <Link className="link" href="/submit-camp">Know of one? Submit it.</Link></p>
         )}
+      </section>
+
+      <section className="container-page py-6">
+        <div className="mx-auto max-w-xl">
+          <LeadCaptureForm variant="alerts" sport={sport} sourcePage="/" enabled={databaseConfigured()} />
+        </div>
       </section>
 
       <section className="container-page py-6">

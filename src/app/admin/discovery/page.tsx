@@ -8,9 +8,13 @@ import type { NormalizedCandidate } from "@/lib/ingestion/types";
 export default async function DiscoveryPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const { db } = await requireStaff("admin");
   const status = (await searchParams).status === "reviewed" ? "reviewed" : "pending";
-  let q = db.from("discovery_queue").select("*, sources(name, content_rights), camps:matched_camp_id(name, slug)").order("created_at", { ascending: false }).limit(100);
-  q = status === "pending" ? q.eq("status", "pending") : q.neq("status", "pending");
-  const { data } = await q;
+  const data = await db`
+    select q.*, q.sport_confidence::float as sport_confidence, q.duplicate_score::float as duplicate_score,
+      case when s.id is null then null else json_build_object('name', s.name, 'content_rights', s.content_rights) end as sources,
+      case when c.id is null then null else json_build_object('name', c.name, 'slug', c.slug) end as camps
+    from discovery_queue q left join sources s on s.id = q.source_id left join camps c on c.id = q.matched_camp_id
+    where ${status === "pending" ? db`q.status = 'pending'` : db`q.status <> 'pending'`}
+    order by q.created_at desc limit 100`;
   type Row = { id: string; kind: string; candidate: NormalizedCandidate; source_url: string | null; sport_confidence: number | null; duplicate_score: number | null; status: string; created_at: string; sources: { name: string; content_rights: string } | null; camps: { name: string; slug: string } | null };
   return (
     <div className="space-y-4">

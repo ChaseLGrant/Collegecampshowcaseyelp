@@ -4,7 +4,9 @@ import { RememberSport } from "./RememberSport";
 import { SampleBanner } from "./SampleBanner";
 import { SearchBar } from "./SearchBar";
 import { SportChips } from "./SportChips";
+import { LeadCaptureForm } from "./LeadCaptureForm";
 import { getPublicRepository } from "@/lib/data";
+import { databaseConfigured } from "@/lib/env";
 import { parseSearchFilters } from "@/lib/search";
 import { breadcrumbJsonLd, jsonLdScript } from "@/lib/seo/jsonld";
 import { SPORTS, directoryPath, sportLabel, type SportId } from "@/lib/sports";
@@ -24,7 +26,7 @@ export async function SportDirectory({ sport, state, searchParams }: {
   sport: SportId; state: string | null; searchParams: Record<string, string | string[] | undefined>;
 }) {
   const filters = parseSearchFilters({ ...searchParams, sport, state: state ?? (searchParams.state as string | undefined) });
-  const repo = getPublicRepository();
+  const repo = await getPublicRepository();
   const [result, options] = await Promise.all([repo.searchCamps(filters), repo.getFilterOptions(sport)]);
   const basePath = state ? `${directoryPath(sport)}/${stateSlug(state)}` : directoryPath(sport);
   const hrefs: Record<string, string> = { all: "/search?sport=all" };
@@ -55,6 +57,9 @@ export async function SportDirectory({ sport, state, searchParams }: {
           </div>
         )}
         <DirectoryResults basePath={basePath} filters={filters} result={result} options={options} showSport={false} sportInUrl={false} />
+        <div className="mx-auto mt-10 max-w-xl">
+          <LeadCaptureForm variant="alerts" sport={sport} sourcePage={basePath} enabled={databaseConfigured()} />
+        </div>
       </div>
     </>
   );

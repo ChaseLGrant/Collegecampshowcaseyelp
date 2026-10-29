@@ -17,6 +17,7 @@ const NAV: [string, string, boolean][] = [
   ["/admin/research", "Research", true],
   ["/admin/plans", "Plans", true],
   ["/admin/entitlements", "Entitlements", true],
+  ["/admin/leads", "Leads", true],
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Search camps & showcases", robots: {
 export default async function SearchPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
   const filters = parseSearchFilters(params, await getStickySportRaw());
-  const repo = getPublicRepository();
+  const repo = await getPublicRepository();
   const [result, options] = await Promise.all([repo.searchCamps(filters), repo.getFilterOptions(filters.sport)]);
 
   const hrefs: Record<string, string> = {};

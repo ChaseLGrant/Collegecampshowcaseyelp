@@ -9,7 +9,7 @@ export const revalidate = 3600;
 
 /** Only real, published pages with substance are listed — no sample data, no thin state pages. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const repo = getPublicRepository();
+  const repo = await getPublicRepository();
   const base = env.siteUrl;
   const out: MetadataRoute.Sitemap = [
     { url: `${base}/`, changeFrequency: "daily", priority: 1 },

@@ -2,7 +2,7 @@ import type Stripe from "stripe";
 import { getStripe } from "@/lib/billing/stripe";
 import { json } from "@/lib/server/http";
 import { syncStripeSubscription } from "@/lib/server/entitlement-sync";
-import { getServiceSupabase } from "@/lib/supabase/server";
+import { getSql } from "@/lib/db";
 
 const HANDLED = new Set([
   "checkout.session.completed",
@@ -18,7 +18,7 @@ const HANDLED = new Set([
 /** Verified Stripe webhook. Signature is checked against the raw body; events are processed idempotently. */
 export async function POST(req: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  const db = getServiceSupabase();
+  const db = getSql();
   if (!secret || !db) return json({ error: "Not configured" }, 503);
   const sig = req.headers.get("stripe-signature");
   if (!sig) return json({ error: "Missing signature" }, 400);
@@ -33,9 +33,9 @@ export async function POST(req: Request) {
   if (!HANDLED.has(event.type)) return json({ received: true });
 
   // Idempotency: record the event id first; a duplicate delivery that already succeeded is skipped.
-  const { data: seen } = await db.from("stripe_events").select("processed_at").eq("id", event.id).maybeSingle();
+  const [seen] = await db<{ processed_at: string | null }[]>`select processed_at from stripe_events where id = ${event.id}`;
   if (seen?.processed_at) return json({ received: true, duplicate: true });
-  if (!seen) await db.from("stripe_events").insert({ id: event.id, type: event.type });
+  if (!seen) await db`insert into stripe_events (id, type) values (${event.id}, ${event.type}) on conflict (id) do nothing`;
 
   try {
     let subscriptionId: string | null = null;
@@ -51,10 +51,10 @@ export async function POST(req: Request) {
       const sub = await stripe.subscriptions.retrieve(subscriptionId);
       await syncStripeSubscription(db, sub);
     }
-    await db.from("stripe_events").update({ processed_at: new Date().toISOString(), error: null }).eq("id", event.id);
+    await db`update stripe_events set processed_at = now(), error = null where id = ${event.id}`;
     return json({ received: true });
   } catch (e) {
-    await db.from("stripe_events").update({ error: (e as Error).message.slice(0, 500) }).eq("id", event.id);
+    await db`update stripe_events set error = ${(e as Error).message.slice(0, 500)} where id = ${event.id}`;
     return json({ error: "Processing failed" }, 500); // Stripe will retry
   }
 }

@@ -7,7 +7,7 @@ import { formatDateRange, formatPrice, locationLabel } from "@/lib/format";
 import { LEVELS, MATCH_DISCLAIMER, matchCamps, matchProfileSchema, type MatchProfile } from "@/lib/matching/score";
 import { parseSearchFilters } from "@/lib/search";
 import { getCurrentAccess } from "@/lib/server/access";
-import { getServerSupabase } from "@/lib/supabase/server";
+import { requireSql } from "@/lib/db";
 import { SPORTS } from "@/lib/sports";
 import { STATE_CODES, stateName } from "@/lib/states";
 import type { CampDetail } from "@/lib/types";
@@ -32,13 +32,13 @@ export default async function MatchPage() {
     );
   }
 
-  const db = (await getServerSupabase())!;
-  const { data: row } = await db.from("match_profiles").select("*").eq("user_id", userId!).maybeSingle();
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const [row] = await requireSql()<any[]>`select * from match_profiles where user_id = ${userId!}`;
   let profile: MatchProfile | null = null;
   if (row) {
     const p = matchProfileSchema.safeParse({
       sport: row.sport, position: row.position ?? undefined, gradYear: row.grad_year ?? undefined, homeState: row.home_state ?? undefined,
-      preferredLevels: row.preferred_levels ?? [], gpa: row.gpa ?? undefined, maxTravelMiles: row.max_travel_miles ?? undefined,
+      preferredLevels: row.preferred_levels ?? [], gpa: row.gpa != null ? Number(row.gpa) : undefined, maxTravelMiles: row.max_travel_miles ?? undefined,
       budgetDollars: row.budget_cents != null ? row.budget_cents / 100 : undefined,
     });
     if (p.success) profile = p.data;

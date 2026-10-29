@@ -15,6 +15,7 @@ import { draftResearchSummary } from "../research/ai";
 import { FEATURES } from "../billing/plans";
 import { audit, requireStaff } from "../server/auth";
 import { EVENT_TYPE_IDS, SPORT_IDS } from "../sports";
+import { deleteProof } from "../storage/proofs";
 
 const uuid = z.string().uuid();
 const MAX_UPLOAD = 5 * 1024 * 1024;
@@ -37,7 +38,8 @@ export async function rejectQueue(formData: FormData) {
   const { user, db } = await requireStaff("admin");
   const id = uuid.parse(formData.get("id"));
   const status = formData.get("status") === "duplicate" ? "duplicate" : "rejected";
-  await db.from("discovery_queue").update({ status, reviewer_id: user.id, reviewed_at: new Date().toISOString(), notes: String(formData.get("notes") ?? "").slice(0, 500) || null }).eq("id", id).eq("status", "pending");
+  const notes = String(formData.get("notes") ?? "").slice(0, 500) || null;
+  await db`update discovery_queue set status = ${status}, reviewer_id = ${user.id}, reviewed_at = now(), notes = ${notes} where id = ${id} and status = 'pending'`;
   await audit(user.id, `queue.${status}`, "discovery_queue", id);
   revalidatePath("/admin/discovery");
 }
@@ -58,6 +60,12 @@ const sourceSchema = z.object({
   }),
 });
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/** Serializes a source row for postgres.js (config is jsonb). */
+function dbRow(row: Record<string, any>): Record<string, any> {
+  return { ...row, config: JSON.stringify(row.config ?? {}) };
+}
+
 export async function saveSource(formData: FormData) {
   const { user, db } = await requireStaff("admin");
   const id = formData.get("id") ? uuid.parse(formData.get("id")) : null;
@@ -73,11 +81,11 @@ export async function saveSource(formData: FormData) {
   };
   if (id) {
     // Keep the original review date if the box stays ticked.
-    const { data: prev } = await db.from("sources").select("terms_reviewed_at").eq("id", id).single();
+    const [prev] = await db<{ terms_reviewed_at: string | null }[]>`select terms_reviewed_at from sources where id = ${id}`;
     if (row.terms_reviewed_at && prev?.terms_reviewed_at) row.terms_reviewed_at = prev.terms_reviewed_at;
-    await db.from("sources").update(row).eq("id", id);
+    await db`update sources set ${db(dbRow(row))} where id = ${id}`;
   } else {
-    await db.from("sources").insert({ ...row, created_by: user.id });
+    await db`insert into sources ${db(dbRow({ ...row, created_by: user.id }))}`;
   }
   await audit(user.id, id ? "source.update" : "source.create", "sources", id, { name: data.name, rights: data.content_rights });
   revalidatePath("/admin/sources");
@@ -87,7 +95,7 @@ export async function saveSource(formData: FormData) {
 export async function runSourceNow(formData: FormData) {
   const { user, db } = await requireStaff("admin");
   const id = uuid.parse(formData.get("id"));
-  const { data } = await db.from("sources").select("*").eq("id", id).single();
+  const [data] = await db`select * from sources where id = ${id}`;
   if (!data) throw new Error("Source not found");
   const r = await runSource(mapSourceRow(data), makeIngestionStore(db), { triggeredBy: "admin" });
   await audit(user.id, "source.run", "sources", id, { status: r.status, queued: r.queued });
@@ -107,7 +115,7 @@ export async function importCampCsv(formData: FormData) {
   const { user, db } = await requireStaff("admin");
   const sourceId = uuid.parse(formData.get("sourceId"));
   const text = await readUpload(formData);
-  const { data: src } = await db.from("sources").select("*").eq("id", sourceId).single();
+  const [src] = await db`select * from sources where id = ${sourceId}`;
   if (!src) throw new Error("Source not found");
   const source = mapSourceRow(src);
   if (source.contentRights === "prohibited" || source.contentRights === "unknown" || !source.termsReviewedAt) {
@@ -124,31 +132,35 @@ export async function importExternalReviewCsv(formData: FormData) {
   const { user, db } = await requireStaff("admin");
   const sourceId = uuid.parse(formData.get("sourceId"));
   const text = await readUpload(formData);
-  const { data: src } = await db.from("sources").select("*").eq("id", sourceId).single();
+  const [src] = await db`select * from sources where id = ${sourceId}`;
   if (!src) throw new Error("Source not found");
   if (src.content_rights === "prohibited" || src.content_rights === "unknown" || !src.terms_reviewed_at) {
     throw new Error("Review this source's license and set content rights before importing reviews.");
   }
   const rights = defaultRightsForSource(src.content_rights);
   const { rows, errors } = parseExternalReviewCsv(text);
-  const { data: campRows } = await db.from("camp_directory").select("id,name,sport,organizer_name,institution_name,organizer_id,city,state,start_date").limit(20000);
-  const camps = (campRows ?? []).map((c) => ({ id: c.id, name: c.name, sport: c.sport, organizerName: c.organizer_name, institutionName: c.institution_name, city: c.city, state: c.state, startDate: c.start_date, organizerId: c.organizer_id }));
+  const campRows = await db`select id, name, sport, organizer_name, institution_name, organizer_id, city, state, start_date from camp_directory limit 20000`;
+  const camps = campRows.map((c) => ({ id: c.id, name: c.name, sport: c.sport, organizerName: c.organizer_name, institutionName: c.institution_name, city: c.city, state: c.state, startDate: c.start_date, organizerId: c.organizer_id }));
   let inserted = 0;
   let unmatched = 0;
   for (const r of rows) {
     const best = bestCampMatch({ referencedName: r.referencedName, organizer: r.organizer, sport: r.sport, reviewDate: r.reviewDate, city: r.city, state: r.state }, camps);
     if (!best || best.confidence < 0.3) { unmatched++; continue; }
     const camp = camps.find((c) => c.id === best.camp.id)!;
-    const { error } = await db.from("external_reviews").insert({
-      source_id: sourceId, platform_name: r.platformName, source_url: r.sourceUrl, provenance_type: r.provenanceType,
-      camp_id: camp.id, organizer_id: camp.organizerId, referenced_name: r.referencedName, sport: r.sport,
-      review_date: r.reviewDate, rating: r.rating, rating_scale: r.ratingScale,
-      rating_display_permitted: rights.ratingDisplayPermitted, excerpt: rights.excerptPermitted ? r.excerpt : null,
-      excerpt_permitted: rights.excerptPermitted, reviewer_display: null, reviewer_display_permitted: false,
-      attribution: r.attribution, rights_status: rights.rightsStatus, match_confidence: best.confidence, match_method: best.method,
-      status: "pending",
-    });
-    if (!error) inserted++;
+    try {
+      await db`insert into external_reviews ${db({
+        source_id: sourceId, platform_name: r.platformName, source_url: r.sourceUrl, provenance_type: r.provenanceType,
+        camp_id: camp.id, organizer_id: camp.organizerId ?? null, referenced_name: r.referencedName, sport: r.sport ?? null,
+        review_date: r.reviewDate ?? null, rating: r.rating ?? null, rating_scale: r.ratingScale ?? null,
+        rating_display_permitted: rights.ratingDisplayPermitted, excerpt: rights.excerptPermitted ? r.excerpt ?? null : null,
+        excerpt_permitted: rights.excerptPermitted, reviewer_display: null, reviewer_display_permitted: false,
+        attribution: r.attribution, rights_status: rights.rightsStatus, match_confidence: best.confidence, match_method: best.method ?? null,
+        status: "pending",
+      } as Record<string, any>)}`;
+      inserted++;
+    } catch (e) {
+      console.error("external review import row failed:", (e as Error).message);
+    }
   }
   await audit(user.id, "import.external_reviews_csv", "sources", sourceId, { inserted, unmatched, errors: errors.length });
   redirect(`/admin/external-reviews?imported=${inserted}&unmatched=${unmatched}&errors=${errors.length}`);
@@ -164,7 +176,7 @@ export async function updateCamp(formData: FormData) {
   const status = String(formData.get("status") ?? "");
   if (["draft", "published", "archived", "cancelled"].includes(status)) patch.status = status;
   if (formData.get("markVerified") === "on") { patch.last_verified_at = new Date().toISOString(); patch.verification_status = "verified"; }
-  await db.from("camps").update(patch).eq("id", id);
+  if (Object.keys(patch).length) await db`update camps set ${db(patch as Record<string, any>)} where id = ${id}`;
   await audit(user.id, "camp.update", "camps", id, patch);
   revalidatePath("/admin/camps");
 }
@@ -174,7 +186,7 @@ export async function verifyParticipatingCollege(formData: FormData) {
   const campId = uuid.parse(formData.get("campId"));
   const institutionId = uuid.parse(formData.get("institutionId"));
   const sourceUrl = z.string().url().parse(formData.get("sourceUrl"));
-  await db.from("camp_participating_colleges").update({ verified: true, source_url: sourceUrl }).eq("camp_id", campId).eq("institution_id", institutionId);
+  await db`update camp_participating_colleges set verified = true, source_url = ${sourceUrl} where camp_id = ${campId} and institution_id = ${institutionId}`;
   await audit(user.id, "camp.verify_college", "camps", campId, { institutionId, sourceUrl });
   revalidatePath("/admin/camps");
 }
@@ -185,8 +197,8 @@ export async function moderateReview(formData: FormData) {
   const id = uuid.parse(formData.get("id"));
   const status = z.enum(["published", "rejected", "removed", "pending"]).parse(formData.get("status"));
   // Only moderation fields change; the database trigger blocks any content edit by non-authors.
-  await db.from("reviews").update({ status }).eq("id", id);
-  if (formData.get("resolveReports") === "on") await db.from("review_reports").update({ resolved: true }).eq("review_id", id);
+  await db`update reviews set status = ${status} where id = ${id}`;
+  if (formData.get("resolveReports") === "on") await db`update review_reports set resolved = true where review_id = ${id}`;
   await audit(user.id, `review.${status}`, "reviews", id);
   revalidatePath("/admin/reviews");
 }
@@ -195,10 +207,10 @@ export async function verifyAttendance(formData: FormData) {
   const { user, db } = await requireStaff("moderator");
   const id = uuid.parse(formData.get("id"));
   const verdict = z.enum(["verified", "rejected"]).parse(formData.get("verdict"));
-  const { data } = await db.from("reviews").select("verification_file_path").eq("id", id).single();
-  await db.from("reviews").update({ verification: verdict, verification_file_path: null }).eq("id", id);
+  const [data] = await db<{ verification_file_path: string | null }[]>`select verification_file_path from reviews where id = ${id}`;
+  await db`update reviews set verification = ${verdict}, verification_file_path = null where id = ${id}`;
   // Delete the proof once reviewed — we keep only the outcome.
-  if (data?.verification_file_path) await db.storage.from("attendance-proofs").remove([data.verification_file_path]);
+  if (data?.verification_file_path) await deleteProof(data.verification_file_path).catch((e) => console.error("proof delete failed:", (e as Error).message));
   await audit(user.id, `review.attendance_${verdict}`, "reviews", id);
   revalidatePath("/admin/reviews");
 }
@@ -210,12 +222,12 @@ export async function reviewExternal(formData: FormData) {
   const decision = z.enum(["approved", "rejected"]).parse(formData.get("decision"));
   const rights = z.enum(["licensed", "permitted", "link_only", "pending_review", "prohibited"]).parse(formData.get("rights_status"));
   if (decision === "approved" && (rights === "pending_review" || rights === "prohibited")) throw new Error("Set permitted rights before approving");
-  await db.from("external_reviews").update({
-    status: decision, rights_status: rights,
-    excerpt_permitted: formData.get("excerpt_permitted") === "on",
-    rating_display_permitted: formData.get("rating_display_permitted") === "on",
-    reviewed_by: user.id, reviewed_at: new Date().toISOString(),
-  }).eq("id", id);
+  await db`
+    update external_reviews set status = ${decision}, rights_status = ${rights},
+      excerpt_permitted = ${formData.get("excerpt_permitted") === "on"},
+      rating_display_permitted = ${formData.get("rating_display_permitted") === "on"},
+      reviewed_by = ${user.id}, reviewed_at = now()
+    where id = ${id}`;
   await audit(user.id, `external_review.${decision}`, "external_reviews", id, { rights });
   revalidatePath("/admin/external-reviews");
 }
@@ -225,20 +237,21 @@ export async function generateResearch(formData: FormData) {
   const { user, db } = await requireStaff("admin");
   const campId = uuid.parse(formData.get("campId"));
   const tier = z.enum(["free", "insider", "elite"]).parse(formData.get("tier") ?? "insider");
-  const { data: row } = await db.from("camp_directory").select("*").eq("id", campId).single();
+  const [row] = await db`select * from camp_directory where id = ${campId}`;
   if (!row) throw new Error("Camp not found");
   const [colleges, coaches, ext] = await Promise.all([
-    db.from("camp_participating_colleges").select("verified,source_url,institutions(name)").eq("camp_id", campId),
-    db.from("camp_coaches").select("coach_name,title,verified,source_url").eq("camp_id", campId),
-    db.from("external_reviews_public").select("*").eq("camp_id", campId).limit(8),
+    db`select cpc.verified, cpc.source_url, json_build_object('name', i.name) as institutions
+       from camp_participating_colleges cpc join institutions i on i.id = cpc.institution_id where cpc.camp_id = ${campId}`,
+    db`select coach_name, title, verified, source_url from camp_coaches where camp_id = ${campId}`,
+    db`select * from external_reviews_public where camp_id = ${campId} limit 8`,
   ]);
-  const camp = mapDetailRow(row, colleges.data ?? [], coaches.data ?? []);
-  const facts = buildResearchFacts(camp, (ext.data ?? []).map(mapExternalPublicRow));
+  const camp = mapDetailRow(row, [...colleges], [...coaches]);
+  const facts = buildResearchFacts(camp, ext.map(mapExternalPublicRow));
   const draft = await draftResearchSummary(camp, facts);
-  await db.from("research_summaries").insert({
-    camp_id: campId, summary: draft.summary, considerations: draft.considerations, facts,
-    method: draft.method, model: draft.model, access_tier: tier, status: "draft",
-  });
+  await db`
+    insert into research_summaries (camp_id, summary, considerations, facts, method, model, access_tier, status)
+    values (${campId}, ${draft.summary}, ${JSON.stringify(draft.considerations)}::jsonb, ${JSON.stringify(facts)}::jsonb,
+            ${draft.method}, ${draft.model ?? null}, ${tier}, 'draft')`;
   await audit(user.id, "research.generate", "camps", campId, { method: draft.method });
   revalidatePath("/admin/research");
 }
@@ -250,7 +263,7 @@ export async function reviewResearch(formData: FormData) {
   const summary = String(formData.get("summary") ?? "").trim();
   const patch: Record<string, unknown> = { status: decision, reviewed_by: user.id, reviewed_at: new Date().toISOString(), review_notes: String(formData.get("notes") ?? "").slice(0, 1000) || null };
   if (summary) patch.summary = summary.slice(0, 4000);
-  await db.from("research_summaries").update(patch).eq("id", id);
+  await db`update research_summaries set ${db(patch as Record<string, any>)} where id = ${id}`;
   await audit(user.id, `research.${decision}`, "research_summaries", id);
   revalidatePath("/admin/research");
 }
@@ -273,7 +286,7 @@ export async function updatePlan(formData: FormData) {
     updated_at: new Date().toISOString(),
   };
   if (patch.stripe_price_id && !/^price_[A-Za-z0-9]+$/.test(patch.stripe_price_id)) throw new Error("Stripe price IDs start with price_");
-  await db.from("plans").update(patch).eq("id", id);
+  await db`update plans set ${db(patch as Record<string, any>)} where id = ${id}`;
   await audit(user.id, "plan.update", "plans", id, { price_cents: patch.price_cents, stripe_price_id: patch.stripe_price_id });
   revalidatePath("/admin/plans");
   revalidatePath("/pricing");
@@ -281,15 +294,11 @@ export async function updatePlan(formData: FormData) {
 
 /* ---------------- Entitlements ---------------- */
 async function findUserId(db: Awaited<ReturnType<typeof requireStaff>>["db"], idOrEmail: string): Promise<string | null> {
-  if (uuid.safeParse(idOrEmail).success) return idOrEmail;
-  const email = idOrEmail.trim().toLowerCase();
-  for (let page = 1; page <= 20; page++) {
-    const { data } = await db.auth.admin.listUsers({ page, perPage: 1000 });
-    const hit = data?.users.find((u) => u.email?.toLowerCase() === email);
-    if (hit) return hit.id;
-    if (!data || data.users.length < 1000) break;
-  }
-  return null;
+  const v = idOrEmail.trim();
+  const [hit] = uuid.safeParse(v).success
+    ? await db<{ id: string }[]>`select id from users where id = ${v}`
+    : await db<{ id: string }[]>`select id from users where lower(email) = lower(${v})`;
+  return hit?.id ?? null;
 }
 
 export async function grantEntitlement(formData: FormData) {
@@ -299,11 +308,10 @@ export async function grantEntitlement(formData: FormData) {
   const planId = z.string().min(1).parse(formData.get("planId"));
   const days = z.coerce.number().int().min(1).max(3650).parse(formData.get("days"));
   const ref = `admin:${user.id}:${Date.now()}`;
-  await db.from("entitlements").insert({
-    user_id: target, plan_id: planId, source: "admin", source_ref: ref,
-    expires_at: new Date(Date.now() + days * 86400_000).toISOString(),
-    notes: String(formData.get("notes") ?? "").slice(0, 500) || null,
-  });
+  await db`
+    insert into entitlements (user_id, plan_id, source, source_ref, expires_at, notes)
+    values (${target}, ${planId}, 'admin', ${ref}, ${new Date(Date.now() + days * 86400_000).toISOString()},
+            ${String(formData.get("notes") ?? "").slice(0, 500) || null})`;
   await audit(user.id, "entitlement.grant", "entitlements", target, { planId, days });
   redirect(`/admin/entitlements?user=${target}`);
 }
@@ -311,7 +319,7 @@ export async function grantEntitlement(formData: FormData) {
 export async function revokeEntitlement(formData: FormData) {
   const { user, db } = await requireStaff("admin");
   const id = uuid.parse(formData.get("id"));
-  const { data } = await db.from("entitlements").update({ revoked_at: new Date().toISOString() }).eq("id", id).select("user_id").single();
+  const [data] = await db<{ user_id: string }[]>`update entitlements set revoked_at = now() where id = ${id} returning user_id`;
   await audit(user.id, "entitlement.revoke", "entitlements", id);
   redirect(`/admin/entitlements${data ? `?user=${data.user_id}` : ""}`);
 }

@@ -19,7 +19,7 @@ export interface QueueInsert {
   submittedBy?: string | null;
 }
 
-/** Storage operations the pipeline needs. Implemented with Supabase in src/lib/admin/ingestion-store.ts. */
+/** Storage operations the pipeline needs. Implemented with Postgres in src/lib/admin/ingestion-store.ts. */
 export interface IngestionStore {
   startRun(sourceId: string | null, triggeredBy: "schedule" | "admin" | "csv" | "submission"): Promise<string>;
   finishRun(runId: string, r: RunResult): Promise<void>;

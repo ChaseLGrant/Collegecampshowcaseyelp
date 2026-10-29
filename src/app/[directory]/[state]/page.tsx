@@ -19,7 +19,7 @@ async function resolve(params: Promise<Params>) {
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const r = await resolve(params);
   if (!r) return {};
-  const opts = await getPublicRepository().getFilterOptions(r.sport);
+  const opts = await (await getPublicRepository()).getFilterOptions(r.sport);
   const count = opts.states.find((s) => s.code === r.state)?.count ?? 0;
   return {
     title: directoryTitle(sportLabel(r.sport), r.state),

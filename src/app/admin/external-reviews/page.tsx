@@ -7,7 +7,12 @@ import type { ExternalProvenance } from "@/lib/types";
 export default async function ExternalReviewsAdmin({ searchParams }: { searchParams: Promise<{ imported?: string; unmatched?: string; errors?: string }> }) {
   const { db } = await requireStaff("admin");
   const sp = await searchParams;
-  const { data } = await db.from("external_reviews").select("*, camps(name,slug), sources(name,content_rights)").eq("status", "pending").order("imported_at", { ascending: false }).limit(100);
+  const data = await db`
+    select e.*, e.match_confidence::float as match_confidence, e.rating::float as rating, e.rating_scale::float as rating_scale,
+      case when c.id is null then null else json_build_object('name', c.name, 'slug', c.slug) end as camps,
+      case when s.id is null then null else json_build_object('name', s.name, 'content_rights', s.content_rights) end as sources
+    from external_reviews e left join camps c on c.id = e.camp_id left join sources s on s.id = e.source_id
+    where e.status = 'pending' order by e.imported_at desc limit 100`;
   /* eslint-disable @typescript-eslint/no-explicit-any */
   return (
     <div className="space-y-4">

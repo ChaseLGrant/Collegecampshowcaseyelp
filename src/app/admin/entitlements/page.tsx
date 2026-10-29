@@ -8,14 +8,19 @@ export default async function EntitlementsAdmin({ searchParams }: { searchParams
   const { db } = await requireStaff("admin");
   const sp = await searchParams;
   const userId = sp.user && /^[0-9a-f-]{36}$/.test(sp.user) ? sp.user : null;
-  const [{ data: plans }, ents, subs, link, recent] = await Promise.all([
-    db.from("plans").select("id,name").order("sort_order"),
-    userId ? db.from("entitlements").select("*").eq("user_id", userId).order("created_at", { ascending: false }) : Promise.resolve({ data: [] as never[] }),
-    userId ? db.from("subscriptions").select("*").eq("user_id", userId) : Promise.resolve({ data: [] as never[] }),
-    userId ? db.from("athlete_market_links").select("*").eq("user_id", userId).maybeSingle() : Promise.resolve({ data: null }),
-    db.from("subscriptions").select("user_id,plan_id,provider,status,updated_at").order("updated_at", { ascending: false }).limit(25),
-  ]);
   /* eslint-disable @typescript-eslint/no-explicit-any */
+  const none = Promise.resolve([] as any[]);
+  const [plans, entRows, subRows, linkRows, recentRows] = await Promise.all([
+    db<{ id: string; name: string }[]>`select id, name from plans order by sort_order`,
+    userId ? db<any[]>`select * from entitlements where user_id = ${userId} order by created_at desc` : none,
+    userId ? db<any[]>`select * from subscriptions where user_id = ${userId}` : none,
+    userId ? db<any[]>`select * from athlete_market_links where user_id = ${userId}` : none,
+    db<any[]>`select user_id, plan_id, provider, status, updated_at from subscriptions order by updated_at desc limit 25`,
+  ]);
+  const ents = { data: entRows };
+  const subs = { data: subRows };
+  const link = { data: linkRows[0] ?? null };
+  const recent = { data: recentRows };
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Subscriptions & entitlements</h1>

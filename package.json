@@ -2,7 +2,7 @@
   "name": "campgrade",
   "version": "1.0.0",
   "private": true,
-  "description": "CampGrade by The Athlete Market \u2014 independent reviews and research for college recruiting camps and showcases.",
+  "description": "CampGrade by The Athlete Market — independent reviews and research for college recruiting camps and showcases.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,16 +10,19 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:migrate": "node scripts/migrate.mjs"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
-    "@supabase/ssr": "^0.12.7",
-    "@supabase/supabase-js": "^2.118.0",
+    "aws4fetch": "^1.0.20",
+    "bcryptjs": "^3.0.3",
     "next": "^15.5.28",
+    "next-auth": "^5.0.0-beta.32",
+    "postgres": "^3.4.9",
     "react": "^19.1.10",
     "react-dom": "^19.1.10",
     "server-only": "^0.0.1",

@@ -4,9 +4,12 @@ import { requireStaff } from "@/lib/server/auth";
 export default async function IngestionPage({ searchParams }: { searchParams: Promise<{ source?: string }> }) {
   const { db } = await requireStaff("admin");
   const sp = await searchParams;
-  let q = db.from("ingestion_runs").select("*, sources(name)").order("started_at", { ascending: false }).limit(100);
-  if (sp.source && /^[0-9a-f-]{36}$/.test(sp.source)) q = q.eq("source_id", sp.source);
-  const { data } = await q;
+  const bySource = sp.source && /^[0-9a-f-]{36}$/.test(sp.source) ? sp.source : null;
+  const data = await db`
+    select r.*, case when s.id is null then null else json_build_object('name', s.name) end as sources
+    from ingestion_runs r left join sources s on s.id = r.source_id
+    ${bySource ? db`where r.source_id = ${bySource}` : db``}
+    order by r.started_at desc limit 100`;
   type Run = { id: string; status: string; triggered_by: string; started_at: string; finished_at: string | null; items_found: number; items_queued: number; items_skipped: number; error: string | null; log: string[]; sources: { name: string } | null };
   const color: Record<string, string> = { succeeded: "bg-emerald-50 text-emerald-800", partial: "bg-amber-50 text-amber-900", failed: "bg-red-50 text-red-700", blocked: "bg-amber-50 text-amber-900", running: "bg-navy-50" };
   return (

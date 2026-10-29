@@ -7,11 +7,16 @@ import { SPORTS } from "@/lib/sports";
 export default async function AdminCampsPage({ searchParams }: { searchParams: Promise<{ filter?: string; q?: string }> }) {
   const { db } = await requireStaff("admin");
   const sp = await searchParams;
-  let q = db.from("camps").select("id,slug,name,sport,status,verification_status,last_verified_at,start_date,end_date,source_url,camp_participating_colleges(institution_id,verified,institutions(name))").order("updated_at", { ascending: false }).limit(100);
-  if (sp.filter === "stale") q = q.eq("verification_status", "stale");
-  if (sp.filter === "unverified") q = q.eq("verification_status", "unverified");
-  if (sp.q) q = q.ilike("name", `%${sp.q.replace(/[%_,()]/g, " ")}%`);
-  const { data } = await q;
+  const conds = [db`true`];
+  if (sp.filter === "stale") conds.push(db`c.verification_status = 'stale'`);
+  if (sp.filter === "unverified") conds.push(db`c.verification_status = 'unverified'`);
+  if (sp.q) conds.push(db`c.name ilike ${"%" + sp.q.replace(/[%_\\]/g, " ") + "%"}`);
+  const where = conds.reduce((a, b) => db`${a} and ${b}`);
+  const data = await db`
+    select c.id, c.slug, c.name, c.sport, c.status, c.verification_status, c.last_verified_at, c.start_date, c.end_date, c.source_url,
+      coalesce((select json_agg(json_build_object('institution_id', p.institution_id, 'verified', p.verified, 'institutions', json_build_object('name', i.name)))
+        from camp_participating_colleges p join institutions i on i.id = p.institution_id where p.camp_id = c.id), '[]') as camp_participating_colleges
+    from camps c where ${where} order by c.updated_at desc limit 100`;
   type Row = { id: string; slug: string; name: string; sport: string; status: string; verification_status: string; last_verified_at: string | null; start_date: string | null; end_date: string | null; source_url: string | null; camp_participating_colleges: { institution_id: string; verified: boolean; institutions: { name: string } | null }[] };
   return (
     <div className="space-y-4">

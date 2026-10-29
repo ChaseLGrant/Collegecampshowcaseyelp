@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { getSessionUser } from "@/lib/server/auth";
-import { supabaseConfigured } from "@/lib/env";
+import { authConfigured } from "@/lib/env";
 
 export async function Header() {
-  const user = supabaseConfigured() ? await getSessionUser() : null;
+  const user = authConfigured() ? await getSessionUser() : null;
   return (
     <header className="border-b border-navy-100 bg-white">
       <div className="container-page flex h-14 items-center justify-between gap-4">
@@ -11,6 +11,7 @@ export async function Header() {
           <span className="grid h-7 w-7 place-items-center rounded-md bg-navy text-xs font-black text-white">CG</span>
           <span className="text-lg">CampGrade</span>
         </Link>
+        <a href="https://theathletemarket.com" target="_blank" rel="noopener" className="hidden text-xs muted hover:text-brand md:inline">Powered by The Athlete Market</a>
         <nav className="flex items-center gap-1 text-sm">
           <Link href="/search" className="btn-ghost hidden px-3 sm:inline-flex">Browse</Link>
           <Link href="/compare" className="btn-ghost hidden px-3 sm:inline-flex">Compare</Link>

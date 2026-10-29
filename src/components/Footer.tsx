@@ -23,9 +23,13 @@ export function Footer() {
             <li><Link className="hover:text-brand" href="/methodology">How ratings & research work</Link></li>
             <li><Link className="hover:text-brand" href="/submit-camp">Submit a camp</Link></li>
             <li><Link className="hover:text-brand" href="/pricing">Recruiting Insider</Link></li>
+            <li><Link className="hover:text-brand" href="/checklist">Is this camp worth it? checklist</Link></li>
           </ul>
         </div>
       </div>
+      <p className="container-page pb-2 text-sm">
+        <a href="https://theathletemarket.com" target="_blank" rel="noopener" className="font-medium hover:text-brand">Powered by The Athlete Market ↗</a>
+      </p>
       <p className="container-page pb-8 text-xs text-navy-500">
         CampGrade does not guarantee recruiting exposure, scholarship offers or roster placement from any event. Verify details with the organizer before registering.
       </p>

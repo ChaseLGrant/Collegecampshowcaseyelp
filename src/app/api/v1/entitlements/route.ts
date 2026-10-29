@@ -1,7 +1,7 @@
 import { verifyRequest } from "@/lib/security/hmac";
 import { json } from "@/lib/server/http";
 import { loadAccessForUser } from "@/lib/server/access";
-import { getServiceSupabase } from "@/lib/supabase/server";
+import { getSql } from "@/lib/db";
 
 /**
  * Cross-product entitlement API (server-to-server only).
@@ -18,10 +18,10 @@ export async function GET(req: Request) {
   if (!v.ok) return json({ error: v.reason }, 401);
   const accountId = url.searchParams.get("athlete_market_account_id");
   if (!accountId) return json({ error: "athlete_market_account_id required" }, 400);
-  const db = getServiceSupabase();
+  const db = getSql();
   if (!db) return json({ error: "Unavailable" }, 503);
-  const { data: link } = await db.from("athlete_market_links").select("user_id,status").eq("athlete_market_account_id", accountId).maybeSingle();
+  const [link] = await db<{ user_id: string; status: string }[]>`select user_id, status from athlete_market_links where athlete_market_account_id = ${accountId}`;
   if (!link || link.status !== "active") return json({ linked: false, tier: "free", grants: [] });
-  const access = await loadAccessForUser(link.user_id, true);
+  const access = await loadAccessForUser(link.user_id);
   return json({ linked: true, tier: access.tier, features: access.features, grants: access.grants });
 }

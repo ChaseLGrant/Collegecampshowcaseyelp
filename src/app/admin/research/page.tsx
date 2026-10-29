@@ -6,9 +6,12 @@ import type { ResearchFact } from "@/lib/types";
 
 export default async function ResearchAdmin() {
   const { db } = await requireStaff("admin");
-  const [{ data: drafts }, { data: camps }] = await Promise.all([
-    db.from("research_summaries").select("*, camps(name,slug)").eq("status", "draft").order("generated_at", { ascending: false }).limit(50),
-    db.from("camps").select("id,name").eq("status", "published").order("updated_at", { ascending: false }).limit(300),
+  const [drafts, camps] = await Promise.all([
+    db`
+      select r.*, json_build_object('name', c.name, 'slug', c.slug) as camps
+      from research_summaries r join camps c on c.id = r.camp_id
+      where r.status = 'draft' order by r.generated_at desc limit 50`,
+    db<{ id: string; name: string }[]>`select id, name from camps where status = 'published' order by updated_at desc limit 300`,
   ]);
   /* eslint-disable @typescript-eslint/no-explicit-any */
   return (

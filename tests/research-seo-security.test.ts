@@ -69,11 +69,14 @@ describe("community review protection", () => {
   });
   it("ingestion, external-review and research code never writes to the reviews table", () => {
     const scoped = [...files(path.join(root, "ingestion")), ...files(path.join(root, "external-reviews")), ...files(path.join(root, "research")), path.join(root, "admin/approve.ts"), path.join(root, "admin/ingestion-store.ts")];
-    for (const f of scoped) expect(readFileSync(f, "utf8"), f).not.toMatch(/from\(["']reviews["']\)/);
+    for (const f of scoped) expect(readFileSync(f, "utf8"), f).not.toMatch(/\b(insert\s+into|update|delete\s+from)\s+(public\.)?reviews\b/i);
   });
   it("the database blocks non-author edits to review content", () => {
-    const sql = readFileSync(path.resolve(__dirname, "../supabase/migrations/20261029000001_core_schema.sql"), "utf8");
+    const sql = readFileSync(path.resolve(__dirname, "../db/migrations/0001_core_schema.sql"), "utf8");
     expect(sql).toMatch(/create trigger reviews_content_guard/);
     expect(sql).toMatch(/Review content can only be edited by its author/);
+    expect(sql).toMatch(/Community reviews can only be created by their author/);
+    // Plain Postgres: no Supabase auth schema, RLS policies or storage schema.
+    expect(sql).not.toMatch(/auth\.(users|uid)\b|create policy|storage\.(buckets|objects)/);
   });
 });

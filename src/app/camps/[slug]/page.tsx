@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { LeadCaptureForm } from "@/components/LeadCaptureForm";
+import { databaseConfigured } from "@/lib/env";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CompareButton } from "@/components/CompareButton";
@@ -79,6 +81,7 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
             </p>
             <div className="mt-3"><RatingBadge stats={camp.stats} size="md" /></div>
           </div>
+          <div className="space-y-4">
           <div className="card p-4">
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between gap-3"><dt className="muted">Cost</dt><dd className="font-semibold">{formatPrice(camp.priceCents, camp.priceNotes)}</dd></div>
@@ -105,6 +108,8 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
             <p className="mt-3 text-xs muted">
               Facts are {factKind === "verified" ? "verified against" : "as advertised by"} the source{src ? <> — <a className="link" href={src} target="_blank" rel="noopener noreferrer nofollow">view source</a></> : ""}. Confirm details with the organizer before paying.
             </p>
+          </div>
+          <LeadCaptureForm variant="coach_call" sport={camp.sport} campSlug={camp.isSample ? null : camp.slug} sourcePage={`/camps/${camp.slug}`} enabled={databaseConfigured()} />
           </div>
         </header>
 
