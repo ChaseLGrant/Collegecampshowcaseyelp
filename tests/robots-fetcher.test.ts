@@ -9,13 +9,13 @@ Allow: /private/camps
 Disallow: /*.pdf$
 Crawl-delay: 5
 
-User-agent: CampGradeBot
+User-agent: CampCheckBot
 Disallow: /registration
 `;
 
 describe("robots.txt", () => {
   it("uses the specific group for our bot", () => {
-    const r = parseRobots(robots, "CampGradeBot/1.0");
+    const r = parseRobots(robots, "CampCheckBot/1.0");
     expect(isAllowed(r, "/registration/form")).toBe(false);
     expect(isAllowed(r, "/private")).toBe(true); // specific group replaces *
   });

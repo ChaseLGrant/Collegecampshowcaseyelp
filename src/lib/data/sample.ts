@@ -6,7 +6,7 @@ import type { EventType, SportId } from "../sports";
  * SAMPLE DATA — fictional institutions and events used only when no database is
  * configured, so the interface can be explored locally. Every record is flagged
  * isSample and the UI shows a "Sample data" banner. There are deliberately no
- * sample reviews: CampGrade never fabricates reviews, even for demos.
+ * sample reviews: Camp Check never fabricates reviews, even for demos.
  */
 function daysFromNow(n: number): string {
   const d = new Date();

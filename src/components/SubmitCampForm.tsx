@@ -25,12 +25,12 @@ export function SubmitCampForm() {
       <div className="card p-6">
         {result.published ? (
           <>
-            <p className="text-lg font-semibold">Thanks — it&apos;s live on CampGrade.</p>
+            <p className="text-lg font-semibold">Thanks — it&apos;s live on Camp Check.</p>
             <p className="mt-1 text-sm muted">Families can find it now and leave reviews.</p>
           </>
         ) : result.existing ? (
           <>
-            <p className="text-lg font-semibold">Good news — this event is already on CampGrade.</p>
+            <p className="text-lg font-semibold">Good news — this event is already on Camp Check.</p>
             <p className="mt-1 text-sm muted">Thanks for the details; we&apos;ll use them to keep the listing current.</p>
           </>
         ) : (

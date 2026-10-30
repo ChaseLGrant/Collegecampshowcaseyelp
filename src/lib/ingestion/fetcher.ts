@@ -1,7 +1,7 @@
 import { isAllowed, parseRobots, type RobotsRules } from "./robots";
 import type { FetchLike } from "./types";
 
-export const BOT_USER_AGENT = `CampGradeBot/1.0 (+${(process.env.NEXT_PUBLIC_SITE_URL || "https://campgrade.example").replace(/\/$/, "")}/bot)`;
+export const BOT_USER_AGENT = `CampCheckBot/1.0 (+${(process.env.NEXT_PUBLIC_SITE_URL || "https://campcheck.example").replace(/\/$/, "")}/bot)`;
 const MAX_BYTES = 2_000_000;
 
 /** Markers of bot-protection / challenge pages. We stop instead of trying to get past them. */

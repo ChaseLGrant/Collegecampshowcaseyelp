@@ -66,10 +66,10 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
       </div>
       <div className="card mx-auto mt-4 max-w-2xl p-5 text-sm">
         <p className="font-semibold">Already a member of The Athlete Market?</p>
-        <p className="mt-1 muted">Recruiting Insider and Insider Elite members get CampGrade benefits at no extra cost. Sign in, then link your Athlete Market account from your account page — you&apos;ll confirm ownership by signing in to The Athlete Market.</p>
+        <p className="mt-1 muted">Recruiting Insider and Insider Elite members get Camp Check benefits at no extra cost. Sign in, then link your Athlete Market account from your account page — you&apos;ll confirm ownership by signing in to The Athlete Market.</p>
         <Link href="/account#athlete-market" className="link mt-2 inline-block">Activate my benefits →</Link>
       </div>
-      <p className="mx-auto mt-6 max-w-2xl text-center text-xs muted">Cancel anytime from your account. Access continues until the end of the paid period. CampGrade does not guarantee recruiting exposure, offers or roster placement.</p>
+      <p className="mx-auto mt-6 max-w-2xl text-center text-xs muted">Cancel anytime from your account. Access continues until the end of the paid period. Camp Check does not guarantee recruiting exposure, offers or roster placement.</p>
     </div>
   );
 }

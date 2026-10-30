@@ -1,6 +1,6 @@
 # Data sources & content rights
 
-CampGrade only uses data it is allowed to use. These rules are enforced in code, not just policy.
+Camp Check only uses data it is allowed to use. These rules are enforced in code, not just policy.
 
 ## Before any source runs
 `ingestionPolicy()` (src/lib/ingestion/policy.ts) blocks a source unless all of the following are true:
@@ -13,7 +13,7 @@ CampGrade only uses data it is allowed to use. These rules are enforced in code,
 `PoliteFetcher` (src/lib/ingestion/fetcher.ts):
 - reads robots.txt first. If robots.txt returns a server error (5xx), the site is skipped.
 - follows `Crawl-delay` and the per-source requests-per-minute limit
-- identifies itself as `CampGradeBot/1.0 (+<site>/bot)`, sends no cookies or credentials, and never uses a fake browser identity
+- identifies itself as `CampCheckBot/1.0 (+<site>/bot)`, sends no cookies or credentials, and never uses a fake browser identity
 - **stops** on 401/403 (access restricted), 429 (rate limited), login forms and bot-challenge pages, and records the run as `blocked`. It never retries around or bypasses them.
 - licensed APIs are called with credentials the provider issued, stored in env vars and referenced by name
 
@@ -31,7 +31,7 @@ Reviewer identities from external platforms are **never** imported by CSV, and a
 ## What we never do
 - Invent missing facts. Unknown prices, dates and similar fields stay blank and are listed as "missing" in the queue.
 - Generate or import fake reviews, or turn AI research into reviews.
-- Blend external ratings into CampGrade's star rating.
+- Blend external ratings into Camp Check's star rating.
 - Let any automated process write to community reviews. A database trigger blocks it.
 
 ## CSV formats

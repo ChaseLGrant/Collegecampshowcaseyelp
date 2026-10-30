@@ -6,12 +6,14 @@ import { env } from "@/lib/env";
 
 export const metadata: Metadata = {
   metadataBase: new URL(env.siteUrl),
-  title: { default: "CampGrade — Find Camps Worth Your Money", template: "%s | CampGrade" },
+  title: { default: "Camp Check — Find Camps Worth Your Money", template: "%s | Camp Check" },
   description: "Real reviews, independent research, and recruiting camp intelligence—all in one place. Compare college prospect camps, ID camps and showcases before you spend.",
-  openGraph: { siteName: "CampGrade", type: "website" },
+  openGraph: { siteName: "Camp Check", type: "website", images: [{ url: "/brand/icon-512.png", width: 512, height: 512, alt: "Camp Check by The Athlete Market" }] },
+  twitter: { card: "summary", title: "Camp Check — Find Camps Worth Your Money", images: ["/brand/icon-512.png"] },
+  applicationName: "Camp Check",
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0B1F3A" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0A0A0A" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

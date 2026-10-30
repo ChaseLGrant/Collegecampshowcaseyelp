@@ -20,7 +20,7 @@ export interface SearchFilters {
   minRating?: number;
   minReviews?: number;
   includePast?: boolean;
-  /** Only CampGrade Editor's Picks. */
+  /** Only Camp Check Editor's Picks. */
   editorsPick?: boolean;
   sort: SortOption;
   page: number;

@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   return new NextResponse(leadsToCsv(rows), {
     headers: {
       "content-type": "text/csv; charset=utf-8",
-      "content-disposition": `attachment; filename="campgrade-leads-${stamp}.csv"`,
+      "content-disposition": `attachment; filename="camp-check-leads-${stamp}.csv"`,
       "cache-control": "no-store",
     },
   });

@@ -14,11 +14,11 @@ export const metadata: Metadata = { title: "Your account", robots: { index: fals
 
 const TAM_MESSAGES: Record<string, string> = {
   linked: "Your Athlete Market account is linked. Bundled benefits are active.",
-  already_linked: "That Athlete Market account is already linked to a different CampGrade account.",
+  already_linked: "That Athlete Market account is already linked to a different Camp Check account.",
   expired: "The linking session expired. Please try again.",
   error: "We couldn't link your Athlete Market account. Please try again.",
   unavailable: "Athlete Market linking isn't available yet.",
-  signin: "Please sign in to CampGrade first.",
+  signin: "Please sign in to Camp Check first.",
 };
 
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ tam?: string; checkout?: string }> }) {
@@ -66,7 +66,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <ul className="mt-2 space-y-1 text-sm muted">
             {access.grants.map((g) => (
               <li key={`${g.source}-${g.planId}`}>
-                {planName(g.planId)} via {g.source === "stripe" ? "CampGrade subscription" : g.source === "athlete_market" ? "The Athlete Market" : "CampGrade staff"}
+                {planName(g.planId)} via {g.source === "stripe" ? "Camp Check subscription" : g.source === "athlete_market" ? "The Athlete Market" : "Camp Check staff"}
                 {g.expiresAt ? ` · renews or ends ${formatDate(g.expiresAt)}` : ""}
               </li>
             ))}
@@ -89,7 +89,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <p className="mt-1 text-sm">Linked {formatDate(link.data.linked_at)}{link.data.last_synced_at ? ` · last checked ${formatDate(link.data.last_synced_at)}` : ""}. Recruiting Insider and Insider Elite memberships carry over automatically.</p>
         ) : (
           <>
-            <p className="mt-1 text-sm muted">Subscribed to Recruiting Insider or Insider Elite at The Athlete Market? Link your account to activate CampGrade benefits without paying twice. You&apos;ll sign in to The Athlete Market to confirm it&apos;s yours.</p>
+            <p className="mt-1 text-sm muted">Subscribed to Recruiting Insider or Insider Elite at The Athlete Market? Link your account to activate Camp Check benefits without paying twice. You&apos;ll sign in to The Athlete Market to confirm it&apos;s yours.</p>
             <form action="/api/athlete-market/link" method="post" className="mt-3">
               <button className="btn-secondary" disabled={!athleteMarketConfigured()}>{athleteMarketConfigured() ? "Link The Athlete Market account" : "Linking coming soon"}</button>
             </form>

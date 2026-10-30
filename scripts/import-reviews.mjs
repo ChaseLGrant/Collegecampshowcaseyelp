@@ -1,4 +1,4 @@
-// Imports CampGrade's paraphrased summaries of public feedback into external_reviews.
+// Imports Camp Check's paraphrased summaries of public feedback into external_reviews.
 // Usage: DATABASE_URL=... node scripts/import-reviews.mjs [--dry-run] [--verbose] reviews.json
 //   --dry-run  run inside a transaction and roll it back (reports matches / unmatched rows)
 //

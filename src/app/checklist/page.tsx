@@ -54,7 +54,7 @@ export default function ChecklistPage() {
   return (
     <div className="container-page max-w-3xl py-10">
       <h1 className="h1">Is this camp worth it?</h1>
-      <p className="mt-2 muted">A checklist for parents and athletes before paying for a college recruiting camp, ID camp or showcase. Use it alongside the facts and reviews on each CampGrade listing.</p>
+      <p className="mt-2 muted">A checklist for parents and athletes before paying for a college recruiting camp, ID camp or showcase. Use it alongside the facts and reviews on each Camp Check listing.</p>
       <div className="mt-8 space-y-6">
         {SECTIONS.map((s) => (
           <section key={s.title} className="card p-5">
@@ -67,7 +67,7 @@ export default function ChecklistPage() {
           </section>
         ))}
       </div>
-      <p className="mt-8 text-sm muted">CampGrade is independent and does not guarantee recruiting exposure, offers or roster placement from any event. <Link href="/search" className="link">Search camps</Link> or <Link href="/methodology" className="link">see how our ratings work</Link>.</p>
+      <p className="mt-8 text-sm muted">Camp Check is independent and does not guarantee recruiting exposure, offers or roster placement from any event. <Link href="/search" className="link">Search camps</Link> or <Link href="/methodology" className="link">see how our ratings work</Link>.</p>
     </div>
   );
 }

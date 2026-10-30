@@ -2,7 +2,7 @@
   "name": "campgrade",
   "version": "1.0.0",
   "private": true,
-  "description": "CampGrade by The Athlete Market — independent reviews and research for college recruiting camps and showcases.",
+  "description": "Camp Check by The Athlete Market — independent reviews and research for college recruiting camps and showcases.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

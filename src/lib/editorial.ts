@@ -4,7 +4,7 @@ import type { EditorialRating } from "./types";
 export const EDITORIAL_EXPLAINER =
   "Our team's rating based on college exposure, coaching, value and reputation — separate from parent reviews.";
 
-export const EDITORIAL_LABEL = "CampGrade Editor Rating";
+export const EDITORIAL_LABEL = "Camp Check Editor Rating";
 
 /** Valid editorial score: 1.0–5.0, rounded to one decimal (matches numeric(2,1) in the DB). */
 export function normalizeEditorialScore(v: unknown): number | null {
@@ -19,7 +19,7 @@ export function hasEditorialRating(e: EditorialRating | null | undefined): e is 
   return !!e && typeof e.score === "number" && Number.isFinite(e.score);
 }
 
-/** "CampGrade Editor Rating ★ 4.6" */
+/** "Camp Check Editor Rating ★ 4.6" */
 export function editorialRatingText(score: number): string {
   return `${EDITORIAL_LABEL} ★ ${score.toFixed(1)}`;
 }

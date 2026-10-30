@@ -28,7 +28,7 @@ describe("default sort", () => {
     const ids = filterAndSortCamps(camps, parseSearchFilters({ includePast: "1" })).items.map((c) => c.id);
     expect(ids).toEqual([camps[3].id, camps[2].id, camps[1].id, camps[4].id, camps[0].id]);
   });
-  it("'Top rated by CampGrade' orders by editor score first", () => {
+  it("'Top rated by Camp Check' orders by editor score first", () => {
     const camps = [withEd(0, 4.1, true), withEd(1, 4.9), withEd(2, null, true)];
     const ids = filterAndSortCamps(camps, parseSearchFilters({ sort: "editorial", includePast: "1" })).items.map((c) => c.id);
     expect(ids).toEqual([camps[1].id, camps[0].id, camps[2].id]);
@@ -49,7 +49,7 @@ describe("editorial rating is separate from parent reviews", () => {
     expect(c.stats.avgOverall).toBeNull();
   });
   it("formats the label and validates scores", () => {
-    expect(editorialRatingText(4.6)).toBe("CampGrade Editor Rating ★ 4.6");
+    expect(editorialRatingText(4.6)).toBe("Camp Check Editor Rating ★ 4.6");
     expect(EDITORIAL_EXPLAINER).toMatch(/separate from parent reviews/);
     expect(normalizeEditorialScore("4.64")).toBe(4.6);
     expect(normalizeEditorialScore(0.5)).toBeNull();

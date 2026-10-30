@@ -111,8 +111,8 @@ export function LeadCaptureForm({ variant, sport, campSlug, sourcePage, enabled 
       <label className="flex items-start gap-2 text-xs muted">
         <input type="checkbox" name="consent" required className="mt-0.5" />
         <span>{coach
-          ? "OK to contact me by email (or phone, if given) about camps and a call. CampGrade and The Athlete Market only — unsubscribe anytime."
-          : "Email me camp alerts and the checklist from CampGrade and The Athlete Market. Unsubscribe anytime."}</span>
+          ? "OK to contact me by email (or phone, if given) about camps and a call. Camp Check and The Athlete Market only — unsubscribe anytime."
+          : "Email me camp alerts and the checklist from Camp Check and The Athlete Market. Unsubscribe anytime."}</span>
       </label>
       <button className="btn-primary w-full" disabled={state === "sending" || !enabled}>
         {state === "sending" ? "Sending…" : coach ? "Notify me / request a call" : "Send me alerts + checklist"}

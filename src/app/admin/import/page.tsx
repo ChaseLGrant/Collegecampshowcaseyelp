@@ -11,7 +11,7 @@ export default async function ImportPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Bulk CSV import</h1>
-      <p className="text-sm muted">Only import datasets CampGrade is authorized to use. Pick the source the data came from — its license and rights apply to every row. Rows go to the review queue; nothing is published automatically, and community reviews are never touched.</p>
+      <p className="text-sm muted">Only import datasets Camp Check is authorized to use. Pick the source the data came from — its license and rights apply to every row. Rows go to the review queue; nothing is published automatically, and community reviews are never touched.</p>
       {usable.length === 0 && <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Add a source with reviewed terms and content rights in the Source registry first.</p>}
       <section className="card p-4">
         <h2 className="font-semibold">Camps & showcases</h2>

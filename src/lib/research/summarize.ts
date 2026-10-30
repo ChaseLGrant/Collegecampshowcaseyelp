@@ -23,7 +23,7 @@ export function templateSummary(camp: CampDetail, facts: ResearchFact[]): DraftS
   considerations.push("No camp can guarantee recruiting exposure, offers or roster spots.");
   const summary =
     `${facts[0]?.text ?? camp.name} ${facts[1]?.text ?? ""} ` +
-    (rd.kind === "none" ? "CampGrade has no community reviews for this event yet." : `Community feedback so far: ${rd.label}.`);
+    (rd.kind === "none" ? "Camp Check has no community reviews for this event yet." : `Community feedback so far: ${rd.label}.`);
   return { summary: summary.replace(/\s+/g, " ").trim(), considerations, method: "template", model: null };
 }
 

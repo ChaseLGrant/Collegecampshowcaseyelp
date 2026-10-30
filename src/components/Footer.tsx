@@ -6,7 +6,11 @@ export function Footer() {
     <footer className="mt-16 border-t border-navy-100 bg-navy-50">
       <div className="container-page grid gap-8 py-10 text-sm sm:grid-cols-3">
         <div>
-          <p className="font-bold">CampGrade</p>
+          <a href="https://theathletemarket.com" target="_blank" rel="noopener" className="flex items-center gap-2.5" aria-label="Camp Check by The Athlete Market (opens theathletemarket.com)">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/athlete-market-mark.webp" alt="The Athlete Market logo" width={50} height={40} className="h-10 w-auto" />
+            <span className="font-bold">Camp Check</span>
+          </a>
           <p className="mt-2 muted">An independent directory of college recruiting camps and showcases from The Athlete Market. Real reviews, independent research.</p>
         </div>
         <div>
@@ -28,10 +32,11 @@ export function Footer() {
         </div>
       </div>
       <p className="container-page pb-2 text-sm">
-        <a href="https://theathletemarket.com" target="_blank" rel="noopener" className="font-medium hover:text-brand">Powered by The Athlete Market ↗</a>
+        Camp Check is a free resource from{" "}
+        <a href="https://theathletemarket.com" target="_blank" rel="noopener" className="font-medium text-brand hover:underline">The Athlete Market ↗</a>
       </p>
       <p className="container-page pb-8 text-xs text-navy-500">
-        CampGrade does not guarantee recruiting exposure, scholarship offers or roster placement from any event. Verify details with the organizer before registering.
+        Camp Check does not guarantee recruiting exposure, scholarship offers or roster placement from any event. Verify details with the organizer before registering.
       </p>
     </footer>
   );

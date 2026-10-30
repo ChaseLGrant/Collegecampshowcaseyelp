@@ -136,7 +136,7 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
         ) : (
         <div className="mt-5 border-t border-navy-50 pt-4">
           <p className="font-semibold">Optional: verify your attendance</p>
-          <p className="mt-1 text-sm muted">Upload a registration confirmation or receipt (JPG, PNG, WebP or PDF, up to 5 MB). Only CampGrade moderators can see it; your review gets a &ldquo;Verified attendance&rdquo; badge once confirmed. Feel free to cover payment details.</p>
+          <p className="mt-1 text-sm muted">Upload a registration confirmation or receipt (JPG, PNG, WebP or PDF, up to 5 MB). Only Camp Check moderators can see it; your review gets a &ldquo;Verified attendance&rdquo; badge once confirmed. Feel free to cover payment details.</p>
           {proofState === "done" ? <p className="mt-2 text-sm text-emerald-700">Uploaded — we&apos;ll review it soon.</p> : (
             <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="mt-3 block text-sm" disabled={proofState === "uploading"}
               onChange={(e) => e.target.files?.[0] && uploadProof(e.target.files[0])} />

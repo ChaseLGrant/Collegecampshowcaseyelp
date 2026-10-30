@@ -31,9 +31,9 @@ export function buildResearchFacts(camp: CampDetail, external: PublicExternalRev
   else add("advertised_claim", "This listing has not yet been verified against an official source.", src);
 
   const rd = ratingDisplay(camp.stats);
-  if (rd.kind === "none") add("community_opinion", "No CampGrade community reviews yet.", null);
+  if (rd.kind === "none") add("community_opinion", "No Camp Check community reviews yet.", null);
   else {
-    add("community_opinion", `CampGrade community rating: ${rd.label} (${camp.stats.verifiedCount} with verified attendance).`, null);
+    add("community_opinion", `Camp Check community rating: ${rd.label} (${camp.stats.verifiedCount} with verified attendance).`, null);
     const s = camp.stats;
     const byCat: Record<string, number | null> = { value: s.avgValue, instruction: s.avgInstruction, exposure: s.avgExposure, organization: s.avgOrganization, overall: s.avgOverall };
     const parts = RATING_CATEGORIES.map((c) => (byCat[c.key] != null ? `${c.label} ${byCat[c.key]!.toFixed(1)}` : null)).filter(Boolean);

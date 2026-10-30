@@ -12,7 +12,7 @@ export function EditorsPickBadge({ pick }: { pick: boolean }) {
 }
 
 /**
- * CampGrade's own staff rating, always labeled and visually distinct from the
+ * Camp Check's own staff rating, always labeled and visually distinct from the
  * community (parent) star rating. Renders nothing when the camp has no editorial score.
  */
 export function EditorialRatingBadge({ editorial, size = "sm", showExplainer = false }: {

@@ -32,7 +32,7 @@ export async function SportDirectory({ sport, state, searchParams }: {
   const hrefs: Record<string, string> = { all: "/search?sport=all" };
   SPORTS.forEach((s) => (hrefs[s.id] = s.id === "other" ? "/search?sport=other" : directoryPath(s.id)));
   const label = sportLabel(sport);
-  const crumbs = [{ name: "CampGrade", path: "/" }, { name: `${label} camps`, path: directoryPath(sport) }];
+  const crumbs = [{ name: "Camp Check", path: "/" }, { name: `${label} camps`, path: directoryPath(sport) }];
   if (state) crumbs.push({ name: stateName(state), path: basePath });
 
   return (

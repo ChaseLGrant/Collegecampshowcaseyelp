@@ -138,7 +138,7 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
                     <li key={c.name} className="tag gap-1 bg-navy-50 text-navy-700">{c.name}<ProvenanceTag kind={c.verified ? "verified" : "advertised"} /></li>
                   ))}
                 </ul>
-                <p className="mt-1 text-xs muted">&ldquo;Advertised&rdquo; means the organizer lists the school; CampGrade has not confirmed attendance.</p>
+                <p className="mt-1 text-xs muted">&ldquo;Advertised&rdquo; means the organizer lists the school; Camp Check has not confirmed attendance.</p>
               </div>
             )}
             {camp.coaches.length > 0 && (
@@ -152,11 +152,11 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
           </section>
         )}
 
-        {/* CampGrade editorial rating — staff opinion, kept separate from parent reviews */}
+        {/* Camp Check editorial rating — staff opinion, kept separate from parent reviews */}
         {(hasEditorialRating(camp.editorial) || camp.editorial.pick || camp.editorial.rationale) && (
           <section className="mt-10 max-w-3xl" aria-labelledby="editorial-h">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 id="editorial-h" className="h2">CampGrade Editor Rating</h2>
+              <h2 id="editorial-h" className="h2">Camp Check Editor Rating</h2>
               <EditorsPickBadge pick={camp.editorial.pick} />
             </div>
             <p className="text-sm muted">{EDITORIAL_EXPLAINER}</p>
@@ -176,12 +176,12 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
           </section>
         )}
 
-        {/* 1. CampGrade Community Reviews */}
+        {/* 1. Camp Check Community Reviews */}
         <section id="reviews" className="mt-10" aria-labelledby="community-h">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 id="community-h" className="h2">CampGrade Community Reviews</h2>
-              <p className="text-sm muted">Authentic, first-hand reviews from parents and attendees. Separate from the CampGrade Editor Rating.</p>
+              <h2 id="community-h" className="h2">Camp Check Community Reviews</h2>
+              <p className="text-sm muted">Authentic, first-hand reviews from parents and attendees. Separate from the Camp Check Editor Rating.</p>
             </div>
             <Link href={`/camps/${camp.slug}/review`} className="btn-primary">Write a review</Link>
           </div>
@@ -233,7 +233,7 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
         {/* 2. External Review Sources */}
         <section className="mt-10" aria-labelledby="external-h">
           <h2 id="external-h" className="h2">External Review Sources</h2>
-          <p className="text-sm muted">Third-party information with source attribution. Not included in CampGrade&apos;s star rating.</p>
+          <p className="text-sm muted">Third-party information with source attribution. Not included in Camp Check&apos;s star rating.</p>
           {external.length ? (
             <ul className="mt-4 grid gap-3 sm:grid-cols-2">
               {external.map((e) => (
@@ -257,7 +257,7 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
                   ))}
                   {e.reviewerDisplay && <p className="mt-1 text-xs muted">— {e.reviewerDisplay}</p>}
                   <p className="mt-2 text-xs muted">
-                    {e.attribution}{e.paraphrased ? " (CampGrade's summary, not a quote)" : ""}
+                    {e.attribution}{e.paraphrased ? " (Camp Check's summary, not a quote)" : ""}
                     {e.referencedName !== camp.name ? ` · refers to “${e.referencedName}”` : ""}
                   </p>
                   <a href={safeHttpUrl(e.sourceUrl) ?? "#"} target="_blank" rel="noopener noreferrer nofollow" className="link mt-2 inline-block text-xs">
@@ -271,10 +271,10 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
           )}
         </section>
 
-        {/* 3. CampGrade Research Summary */}
+        {/* 3. Camp Check Research Summary */}
         <section className="mt-10" aria-labelledby="research-h">
-          <h2 id="research-h" className="h2">CampGrade Research Summary</h2>
-          <p className="text-sm muted">AI-assisted synthesis of verifiable information, reviewed by CampGrade staff. This is research, not a first-hand review.</p>
+          <h2 id="research-h" className="h2">Camp Check Research Summary</h2>
+          <p className="text-sm muted">AI-assisted synthesis of verifiable information, reviewed by Camp Check staff. This is research, not a first-hand review.</p>
           {research ? (
             <div className="card mt-4 p-5">
               <p className="leading-relaxed">{research.summary.replace(/\s*\[F\d+\]/g, "")}</p>
@@ -295,7 +295,7 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
                   ))}
                 </ul>
               </details>
-              <p className="mt-3 text-xs muted">{research.method === "ai_assisted" ? "Drafted with AI from the cited facts and approved by CampGrade staff" : "Compiled from the cited facts"} · {formatDate(research.generatedAt)}</p>
+              <p className="mt-3 text-xs muted">{research.method === "ai_assisted" ? "Drafted with AI from the cited facts and approved by Camp Check staff" : "Compiled from the cited facts"} · {formatDate(research.generatedAt)}</p>
             </div>
           ) : canSeeResearch ? (
             <p className="mt-3 text-sm muted">Research for this event is in progress.</p>

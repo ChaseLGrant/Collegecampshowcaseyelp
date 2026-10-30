@@ -1,4 +1,4 @@
-// Sets CampGrade editorial ratings on existing camps. Never touches parent reviews.
+// Sets Camp Check editorial ratings on existing camps. Never touches parent reviews.
 // Usage: DATABASE_URL=... node scripts/import-editorial.mjs [--dry-run] [--verbose] editorial.json
 //   --dry-run  run inside a transaction and roll it back (reports matches / unmatched rows)
 //

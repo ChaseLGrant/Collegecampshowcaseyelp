@@ -5,8 +5,8 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        navy: { DEFAULT: "#0B1F3A", 700: "#14305A", 500: "#3A5274", 300: "#8A9AB3", 100: "#E7ECF3", 50: "#F4F6FA" },
-        brand: { DEFAULT: "#1D5FD1", 600: "#174FB0", 50: "#EEF4FF" },
+        navy: { DEFAULT: "#0A0A0A", 700: "#1F2430", 500: "#3A5274", 300: "#8A9AB3", 100: "#E7ECF3", 50: "#F4F6FA" },
+        brand: { DEFAULT: "#1F4FE0", 600: "#1A41BA", 50: "#EEF2FD" },
         star: { DEFAULT: "#C9A227", muted: "#E8DDB5" },
       },
       fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"] },

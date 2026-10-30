@@ -7,7 +7,7 @@ import type { Plan } from "./plans";
  * See docs/ATHLETE_MARKET_INTEGRATION.md for the full spec TAM must implement.
  *
  * Ownership is proven by the customer signing in to TAM (OAuth 2.0 authorization
- * code + PKCE). CampGrade NEVER grants bundled access just because emails match.
+ * code + PKCE). Camp Check NEVER grants bundled access just because emails match.
  */
 
 export const tamProductsSchema = z.object({
@@ -23,7 +23,7 @@ export type TamProducts = z.infer<typeof tamProductsSchema>;
 
 export const tamTokenSchema = z.object({ account_id: z.string().min(1) });
 
-/** Maps TAM products to CampGrade entitlement rows. Unknown products are ignored. */
+/** Maps TAM products to Camp Check entitlement rows. Unknown products are ignored. */
 export function tamProductsToEntitlements(data: TamProducts, plans: Plan[], now = new Date()) {
   const byKey = new Map(plans.filter((p) => p.athleteMarketProductKey).map((p) => [p.athleteMarketProductKey!, p]));
   return data.products.flatMap((p) => {

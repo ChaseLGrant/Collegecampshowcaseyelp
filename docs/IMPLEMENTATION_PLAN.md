@@ -1,14 +1,14 @@
 # Implementation plan & status
 
 ## Starting point
-The `Collegecampshowcaseyelp` repository was **empty** (no commits or branches) when this work began, and no other repository in the account contained the CampGrade app. Nothing could be preserved, so CampGrade was built from scratch on the architecture the brief specified: Next.js + TypeScript + Tailwind + Supabase (auth, RLS, moderation) with a mobile-first UI. If an earlier CampGrade codebase exists somewhere else (for example, an unpushed local copy or a different builder tool), it can be merged into this structure. The data layer (`src/lib/data/repository.ts`) and schema are the integration points.
+The `Collegecampshowcaseyelp` repository was **empty** (no commits or branches) when this work began, and no other repository in the account contained the Camp Check app. Nothing could be preserved, so Camp Check was built from scratch on the architecture the brief specified: Next.js + TypeScript + Tailwind + Supabase (auth, RLS, moderation) with a mobile-first UI. If an earlier Camp Check codebase exists somewhere else (for example, an unpushed local copy or a different builder tool), it can be merged into this structure. The data layer (`src/lib/data/repository.ts`) and schema are the integration points.
 
 ## Phase 1 — Low-friction search, sport directories, event pages ✅
 - Homepage with the headline, subheadline, search bar and the 8 sport chips directly below. No popups and no required onboarding.
 - The chosen sport is remembered in the `cg_sport` cookie and the URL, and stays active across search, the homepage and directories until changed.
 - `/search` plus `/baseball-camps`, `/softball-camps`, `/football-camps`, `/basketball-camps`, `/soccer-camps`, `/volleyball-camps`, `/lacrosse-camps`, and state sub-pages (`/baseball-camps/texas`).
 - Filters: sport, state, college, association and division (verified only), event type, price, dates, minimum community rating, and minimum review count. Filters are shareable URLs and work without JavaScript.
-- Camp pages keep three separated sections: **CampGrade Community Reviews**, **External Review Sources** and **CampGrade Research Summary**.
+- Camp pages keep three separated sections: **Camp Check Community Reviews**, **External Review Sources** and **Camp Check Research Summary**.
 - Review form: mobile-first, five original categories, can be started without an account, draft saved in the browser and restored after sign-in, 18+ confirmation, honeypot, timing and duplicate checks, optional attendance proof.
 
 ## Phase 2 — Discovery, authorized imports, attribution ✅ (code) / ⚠️ (no live sources configured)

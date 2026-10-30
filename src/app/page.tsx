@@ -94,7 +94,7 @@ export default async function HomePage() {
         <h2 className="h2">Three kinds of information, never mixed</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
           <div className="card p-5">
-            <p className="font-semibold">CampGrade Community Reviews</p>
+            <p className="font-semibold">Camp Check Community Reviews</p>
             <p className="mt-1 text-sm muted">First-hand reviews from parents and athletes who attended, rated on value, instruction, coach exposure, organization and overall experience.</p>
           </div>
           <div className="card p-5">
@@ -102,7 +102,7 @@ export default async function HomePage() {
             <p className="mt-1 text-sm muted">Third-party information shown with its source and a link to the original. Never blended into our star ratings.</p>
           </div>
           <div className="card p-5">
-            <p className="font-semibold">CampGrade Research Summary</p>
+            <p className="font-semibold">Camp Check Research Summary</p>
             <p className="mt-1 text-sm muted">AI-assisted research built only from verifiable facts, reviewed by our team, and clearly labeled as research — not a review.</p>
           </div>
         </div>

@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   if (!sport) return {};
   return {
     title: directoryTitle(sportLabel(sport)),
-    description: `Best college ${sportLabel(sport).toLowerCase()} camps, prospect camps and showcases — real reviews, costs and dates from CampGrade.`,
+    description: `Best college ${sportLabel(sport).toLowerCase()} camps, prospect camps and showcases — real reviews, costs and dates from Camp Check.`,
     alternates: { canonical: directoryPath(sport) },
   };
 }

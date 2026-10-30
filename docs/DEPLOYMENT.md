@@ -37,7 +37,7 @@ To change a price later, create a new Price in Stripe and update the ID and disp
 ## 4. Environment variables
 | Variable | Required for | Notes |
 |---|---|---|
-| `NEXT_PUBLIC_SITE_URL` | everything | e.g. `https://campgrade.com` |
+| `NEXT_PUBLIC_SITE_URL` | everything | e.g. `https://campcheck.com` |
 | `DATABASE_URL` | live data, auth, reviews, leads | Railway public proxy URL; server only |
 | `AUTH_SECRET`, `AUTH_TRUST_HOST=true` | sign-in | `openssl rand -base64 48` |
 | `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` | Google sign-in (optional) | |

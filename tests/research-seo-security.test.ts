@@ -14,7 +14,7 @@ describe("research facts and summaries", () => {
   it("labels facts by kind and separates advertised claims", () => {
     const facts = buildResearchFacts(real({ participatingColleges: [{ name: "Rice", verified: false, sourceUrl: null }] }), []);
     expect(facts.some((f) => f.kind === "advertised_claim" && f.text.includes("not independently verified"))).toBe(true);
-    expect(facts.some((f) => f.kind === "community_opinion" && f.text.includes("No CampGrade community reviews"))).toBe(true);
+    expect(facts.some((f) => f.kind === "community_opinion" && f.text.includes("No Camp Check community reviews"))).toBe(true);
   });
   it("template summary uses only listing facts and disclaims outcomes", () => {
     const s = templateSummary(real(), buildResearchFacts(real(), []));

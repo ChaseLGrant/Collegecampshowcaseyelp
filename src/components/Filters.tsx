@@ -4,7 +4,7 @@ import { stateName } from "@/lib/states";
 import type { FilterOptions } from "@/lib/data/repository";
 
 const SORT_LABELS: Record<string, string> = {
-  recommended: "Recommended", editorial: "Top rated by CampGrade", relevance: "Best match", date: "Soonest", price_low: "Price: low to high", price_high: "Price: high to low",
+  recommended: "Recommended", editorial: "Top rated by Camp Check", relevance: "Best match", date: "Soonest", price_low: "Price: low to high", price_high: "Price: high to low",
   rating: "Parent rating", reviews: "Most parent reviews",
 };
 

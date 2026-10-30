@@ -9,7 +9,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const sp = await searchParams;
   return (
     <div className="container-page max-w-md py-12">
-      <h1 className="text-2xl font-bold">Sign in to CampGrade</h1>
+      <h1 className="text-2xl font-bold">Sign in to Camp Check</h1>
       <div className="mt-6">
         <LoginForm next={safeNextPath(sp.next, "/account")} reason={sp.reason} googleEnabled={googleAuthConfigured()} enabled={authConfigured()}
           initialMode={sp.mode === "signup" || sp.reason === "review" ? "signup" : "signin"} error={sp.error} />

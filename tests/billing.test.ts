@@ -60,7 +60,7 @@ describe("The Athlete Market bundle", () => {
       { key: "unrelated_product", status: "active", valid_until: null, subscription_ref: "c" },
     ],
   });
-  it("maps TAM products to CampGrade plans and revokes canceled ones", () => {
+  it("maps TAM products to Camp Check plans and revokes canceled ones", () => {
     const rows = tamProductsToEntitlements(payload, DEFAULT_PLANS, now);
     expect(rows).toHaveLength(2);
     expect(rows[0]).toMatchObject({ planId: "insider", sourceRef: "tam_42:a", revoke: false, expiresAt: "2026-12-01T00:00:00Z" });
