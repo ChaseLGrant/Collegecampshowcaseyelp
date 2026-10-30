@@ -3,6 +3,7 @@ import { getSql, isUniqueViolation } from "@/lib/db";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { getSessionUser } from "@/lib/server/auth";
 import { json, sameOrigin } from "@/lib/server/http";
+import { rejectIfBot } from "@/lib/security/bot";
 
 const schema = z.object({
   reviewId: z.string().uuid(),
@@ -12,6 +13,8 @@ const schema = z.object({
 
 export async function POST(req: Request) {
   if (!sameOrigin(req)) return json({ error: "Bad origin" }, 403);
+  const bot = await rejectIfBot();
+  if (bot) return bot;
   const sql = getSql();
   if (!sql) return json({ error: "Unavailable" }, 503);
   const user = await getSessionUser();

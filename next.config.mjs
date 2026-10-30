@@ -1,3 +1,5 @@
+import { withBotId } from "botid/next/config";
+
 /** @type {import('next').NextConfig} */
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -15,4 +17,6 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+// BotID: Vercel routes its challenge/detection requests automatically; the wrapper keeps the
+// rewrites explicit so protection also works if automatic routing is ever unavailable.
+export default withBotId(nextConfig);

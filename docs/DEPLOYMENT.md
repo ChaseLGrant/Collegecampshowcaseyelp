@@ -48,6 +48,7 @@ To change a price later, create a new Price in Stripe and update the ID and disp
 | `ATHLETE_MARKET_BASE_URL`, `ATHLETE_MARKET_CLIENT_ID`, `ATHLETE_MARKET_SHARED_SECRET` | bundled access | see ATHLETE_MARKET_INTEGRATION.md |
 | `CRON_SECRET` | scheduled refresh | long random string |
 | `IP_HASH_SALT` | abuse detection | long random string |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | optional Cloudflare Turnstile on review (guests) and submit-camp forms | both must be set; Vercel BotID needs no keys |
 | `ANTHROPIC_API_KEY` | AI research drafts (optional) | without it, research uses the factual template |
 | Provider keys (e.g. `PROVIDER_API_KEY`) | licensed JSON APIs | referenced from a source's `authEnv` config |
 

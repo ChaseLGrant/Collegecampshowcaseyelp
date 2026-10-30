@@ -55,6 +55,10 @@ const PROMO = /\b(promo code|discount code|use code|click here|buy now|dm me|wha
 export function assessSpam(input: Pick<ReviewInput, "title" | "body" | "ratings" | "website" | "elapsedMs">, ctx: {
   recentReviewsByUser?: number; // in the last 24h
   duplicateBodyExists?: boolean;
+  /** Posted without an account. Guests get the stricter hold rules in guestHoldReasons(). */
+  guest?: boolean;
+  /** Guest reviews already posted from this IP in the last 24h, on any camp. */
+  guestRecentFromIp?: number;
 } = {}): SpamAssessment {
   const reasons: string[] = [];
   let score = 0;
@@ -85,6 +89,101 @@ export function assessSpam(input: Pick<ReviewInput, "title" | "body" | "ratings"
   else if ((ctx.recentReviewsByUser ?? 0) >= 3) { score += 2; reasons.push("several reviews in 24 hours"); }
 
   score = Math.min(10, score);
-  const decision = score >= 8 ? "reject" : score >= 3 ? "moderate" : "publish";
+  let decision: SpamAssessment["decision"] = score >= 8 ? "reject" : score >= 3 ? "moderate" : "publish";
+
+  // Guests (no account) are held for a moderator on any of these signals instead of publishing.
+  // Members keep the scoring above unchanged.
+  if (ctx.guest) {
+    const hold = guestHoldReasons(input, { recentFromIp: ctx.guestRecentFromIp });
+    for (const h of hold) if (!reasons.includes(h)) reasons.push(h);
+    if (hold.length && decision === "publish") {
+      decision = "moderate";
+      score = Math.max(score, 3);
+    }
+  }
   return { score, reasons, decision };
+}
+
+/* ------------------------------------------------------------------ */
+/* Stricter content rules for guest (signed-out) reviews               */
+/* ------------------------------------------------------------------ */
+
+const URL_RE = /https?:\/\/|www\.|\b[a-z0-9][a-z0-9-]*\.(?:com|net|org|io|co|ly|xyz|info|biz|me|us|app|site|online|shop|link|gg|tv|ru|cn)\b/i;
+const EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.]+|\b[\w.+-]+\s*(?:\(at\)|\[at\]|\sat\s)\s*[\w-]+\s*(?:\(dot\)|\[dot\]|\sdot\s|\.)\s*(?:com|net|org|edu)\b/i;
+const HANDLE_RE = /(?:^|\s)@[a-z0-9_.]{3,}/i;
+
+/** Phone numbers: 10+ digits in a phone-like group, e.g. 760-555-1234, (760) 555 1234, +1 760.555.1234. */
+export function containsPhone(text: string): boolean {
+  const candidates = text.match(/(?:\+?\d[\d\s().-]{8,}\d)/g) ?? [];
+  return candidates.some((c) => {
+    const digits = c.replace(/\D/g, "");
+    return digits.length >= 10 && digits.length <= 15;
+  });
+}
+
+export function containsContactInfo(text: string): boolean {
+  return EMAIL_RE.test(text) || containsPhone(text) || HANDLE_RE.test(text);
+}
+
+export function containsLink(text: string): boolean {
+  return URL_RE.test(text);
+}
+
+/** More than half of the letters are capitals (needs 20+ letters so short acronyms don't count). */
+export function isMostlyUppercase(text: string): boolean {
+  const letters = text.replace(/[^a-zA-Z]/g, "");
+  if (letters.length < 20) return false;
+  return letters.replace(/[^A-Z]/g, "").length / letters.length > 0.5;
+}
+
+/** "soooooo", "aaaaaa", "!!!!!!!!", "great great great", or a few words repeated over and over. */
+export function hasRepetition(text: string): boolean {
+  if (/([a-z])\1{4,}/i.test(text)) return true; // same letter 5+ times in a row ("$100000" is fine)
+  if (/([^\sa-z0-9])\1{7,}/i.test(text)) return true; // punctuation 8+ times
+  if (/\b(\w+)(?:\W+\1\b){2,}/i.test(text)) return true; // same word 3+ times in a row
+  const words = text.toLowerCase().match(/[a-z0-9']+/g) ?? [];
+  if (words.length >= 10 && new Set(words).size / words.length < 0.4) return true;
+  if (words.length >= 12) {
+    const counts = new Map<string, number>();
+    for (const w of words) if (w.length >= 4) counts.set(w, (counts.get(w) ?? 0) + 1);
+    for (const n of counts.values()) if (n / words.length >= 0.25) return true;
+  }
+  return false;
+}
+
+const KEYBOARD_MASH = /(?:qwert|asdf|sdfg|dfgh|fghj|ghjk|hjkl|zxcv|xcvb|cvbn|vbnm|wasd|qazwsx|jkjk|lkjh|poiu|mnbv)/i;
+
+/**
+ * Keyboard mashing / random letters: words with no vowels or long consonant runs,
+ * very long "words", vowel ratios no real English has, or keyboard rows.
+ */
+export function isGibberish(text: string): boolean {
+  const words = (text.toLowerCase().match(/[a-z]+/g) ?? []);
+  if (words.length < 3) return false;
+  const letters = words.join("");
+  if (letters.length < 25) return false;
+  const mashHits = words.filter((w) => KEYBOARD_MASH.test(w)).length;
+  if (mashHits >= 2 || (mashHits >= 1 && words.length < 12)) return true;
+  const vowels = (letters.match(/[aeiouy]/g) ?? []).length / letters.length;
+  if (vowels < 0.22 || vowels > 0.68) return true;
+  const longWords = words.filter((w) => w.length >= 4);
+  if (!longWords.length) return false;
+  const odd = longWords.filter((w) => w.length > 22 || !/[aeiouy]/.test(w) || /[bcdfghjklmnpqrstvwxz]{5,}/.test(w)).length;
+  return odd / longWords.length > 0.2;
+}
+
+/** Reasons to hold a guest review for moderation (empty = may publish). */
+export function guestHoldReasons(
+  input: Pick<ReviewInput, "title" | "body">,
+  ctx: { recentFromIp?: number } = {},
+): string[] {
+  const text = `${input.title}\n${input.body}`;
+  const out: string[] = [];
+  if (containsLink(text)) out.push("contains links");
+  if (containsContactInfo(text)) out.push("contains contact details");
+  if (isMostlyUppercase(input.body) || isMostlyUppercase(input.title + " " + input.body)) out.push("mostly capital letters");
+  if (hasRepetition(text)) out.push("repeated characters or words");
+  if (isGibberish(input.body) || isGibberish(input.title)) out.push("looks like gibberish");
+  if ((ctx.recentFromIp ?? 0) >= 1) out.push("another guest review from this connection in the last 24 hours");
+  return out;
 }

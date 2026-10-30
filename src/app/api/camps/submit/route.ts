@@ -9,6 +9,8 @@ import { isSportId } from "@/lib/sports";
 import { json, sameOrigin } from "@/lib/server/http";
 import { getSql } from "@/lib/db";
 import { getSessionUser } from "@/lib/server/auth";
+import { rejectIfBot } from "@/lib/security/bot";
+import { TURNSTILE_FAILED_MESSAGE, turnstileEnabled, verifyTurnstile } from "@/lib/security/turnstile";
 
 const schema = z.object({
   name: z.string().trim().min(3).max(200),
@@ -20,6 +22,7 @@ const schema = z.object({
   price: z.string().max(60).optional(),
   website: z.string().max(0).optional().or(z.literal("")),
   elapsedMs: z.number().optional(),
+  turnstileToken: z.string().max(2048).optional(),
 });
 
 /**
@@ -31,11 +34,18 @@ const schema = z.object({
  */
 export async function POST(req: Request) {
   if (!sameOrigin(req)) return json({ error: "Bad origin" }, 403);
-  if (!rateLimit(`submit:${clientIp(req.headers)}`, 5, 3600_000).ok) return json({ error: "Too many submissions" }, 429);
+  const bot = await rejectIfBot();
+  if (bot) return bot;
+  const ip = clientIp(req.headers);
+  if (!rateLimit(`submit:${ip}`, 5, 3600_000).ok) return json({ error: "Too many submissions" }, 429);
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return json({ error: "Please check the form fields." }, 400);
   const d = parsed.data;
   if (d.website || (d.elapsedMs != null && d.elapsedMs < 3000)) return json({ ok: true }); // silently drop bots
+  if (turnstileEnabled()) {
+    const ts = await verifyTurnstile(d.turnstileToken, { remoteIp: ip });
+    if (!ts.ok) return json({ error: TURNSTILE_FAILED_MESSAGE }, 403);
+  }
   if (!safeHttpUrl(d.sourceUrl)) return json({ error: "Please use an http(s) link." }, 400);
   const db = getSql();
   if (!db) return json({ error: "Submissions open once the database is configured." }, 503);

@@ -3,10 +3,13 @@ import { leadInputSchema } from "@/lib/leads";
 import { clientIp, rateLimit } from "@/lib/security/rate-limit";
 import { getSessionUser } from "@/lib/server/auth";
 import { json, sameOrigin } from "@/lib/server/http";
+import { rejectIfBot } from "@/lib/security/bot";
 
 /** Lead capture (camp alerts / checklist, and "talk to a former college coach"). Deduped on email + sport. */
 export async function POST(req: Request) {
   if (!sameOrigin(req)) return json({ error: "Bad origin" }, 403);
+  const bot = await rejectIfBot();
+  if (bot) return bot;
   if (!rateLimit(`lead:${clientIp(req.headers)}`, 10, 3600_000).ok) return json({ error: "Too many submissions. Try again later." }, 429);
   const parsed = leadInputSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return json({ error: parsed.error.issues[0]?.message ?? "Please check the form." }, 400);

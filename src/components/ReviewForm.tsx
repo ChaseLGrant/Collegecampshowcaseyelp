@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { RATING_CATEGORIES, type RatingKey } from "@/lib/ratings";
+import { TURNSTILE_SITE_KEY, TurnstileWidget } from "@/components/TurnstileWidget";
 
 type Draft = {
   ratings: Partial<Record<RatingKey, number>>;
@@ -48,6 +49,10 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
   const [proofState, setProofState] = useState<"idle" | "uploading" | "done" | "error">("idle");
   const started = useRef(Date.now());
   const honeypot = useRef<HTMLInputElement>(null);
+  // Optional Cloudflare Turnstile (signed-out reviewers only; off unless the site key is configured).
+  const needsTurnstile = !signedIn && Boolean(TURNSTILE_SITE_KEY);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileReset, setTurnstileReset] = useState(0);
 
   useEffect(() => {
     try {
@@ -74,6 +79,7 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
     if (!signedIn && guestEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())) e.push("Enter a valid email or leave it blank.");
     if (!d.confirmAdult) e.push("Reviewers must be 18 or older.");
     if (!d.confirmFirsthand) e.push("Confirm this is your own first-hand experience.");
+    if (needsTurnstile && !turnstileToken) e.push("Complete the \u201cverify you\u2019re human\u201d check.");
     return e;
   }
 
@@ -99,10 +105,11 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
         website: honeypot.current?.value ?? "",
         elapsedMs: Date.now() - started.current,
         ...(signedIn ? {} : { guestName: d.guestName.trim(), guestEmail: guestEmail.trim() || undefined }),
+        ...(needsTurnstile ? { turnstileToken } : {}),
       }),
     });
     const json = await res.json().catch(() => ({}));
-    if (!res.ok) { setStatus("idle"); setErrors(json.errors ?? [json.error ?? "Something went wrong. Your draft is saved."]); return; }
+    if (!res.ok) { setStatus("idle"); if (needsTurnstile) setTurnstileReset((n) => n + 1); setErrors(json.errors ?? [json.error ?? "Something went wrong. Your draft is saved."]); return; }
     try { localStorage.removeItem(key); } catch { /* ignore */ }
     setReviewId(json.id);
     setPostedAsGuest(Boolean(json.guest));
@@ -211,6 +218,7 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
         <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" checked={d.confirmAdult} onChange={(e) => update({ confirmAdult: e.target.checked })} /> I am 18 or older.</label>
         <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" checked={d.confirmFirsthand} onChange={(e) => update({ confirmFirsthand: e.target.checked })} /> This review describes my own (or my athlete&apos;s) first-hand experience, and I have no business relationship with the organizer.</label>
       </div>
+      {needsTurnstile && <TurnstileWidget onToken={setTurnstileToken} resetKey={turnstileReset} />}
       {errors.length > 0 && (
         <ul className="rounded-lg bg-red-50 p-3 text-sm text-red-800" role="alert">{errors.map((e) => <li key={e}>• {e}</li>)}</ul>
       )}

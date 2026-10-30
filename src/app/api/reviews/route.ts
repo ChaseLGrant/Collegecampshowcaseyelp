@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { z } from "zod";
 import { asUser, getSql, isUniqueViolation } from "@/lib/db";
 import { guestEmailFor, guestFieldsSchema, shortDisplayName } from "@/lib/reviews/guest";
 import { reviewInputSchema, assessSpam, bodyFingerprint } from "@/lib/reviews/validation";
@@ -6,8 +7,10 @@ import { clientIp, rateLimit } from "@/lib/security/rate-limit";
 import { hashIp } from "@/lib/security/hmac";
 import { getSessionUser } from "@/lib/server/auth";
 import { json, sameOrigin } from "@/lib/server/http";
+import { rejectIfBot } from "@/lib/security/bot";
+import { TURNSTILE_FAILED_MESSAGE, turnstileEnabled, verifyTurnstile } from "@/lib/security/turnstile";
 
-const schema = reviewInputSchema.merge(guestFieldsSchema);
+const schema = reviewInputSchema.merge(guestFieldsSchema).extend({ turnstileToken: z.string().max(2048).optional() });
 
 /** Guest reviews allowed per IP per day (enforced in memory and, durably, against the database). */
 const GUEST_DAILY_CAP = 5;
@@ -16,6 +19,8 @@ const REJECTED = "We couldn't accept this review. Reviews must be original, firs
 
 export async function POST(req: Request) {
   if (!sameOrigin(req)) return json({ error: "Bad origin" }, 403);
+  const bot = await rejectIfBot();
+  if (bot) return bot;
   const ip = clientIp(req.headers);
   if (!rateLimit(`review:ip:${ip}`, 10, 3600_000).ok) return json({ error: "Too many submissions. Try again later." }, 429);
 
@@ -32,6 +37,10 @@ export async function POST(req: Request) {
     if (!rateLimit(`review:user:${user.id}`, 5, 3600_000).ok) return json({ error: "Too many submissions. Try again later." }, 429);
   } else {
     if (!input.guestName) return json({ errors: ["Add your name so other families know who wrote the review."] }, 400);
+    if (turnstileEnabled()) {
+      const ts = await verifyTurnstile(input.turnstileToken, { remoteIp: ip });
+      if (!ts.ok) return json({ errors: [TURNSTILE_FAILED_MESSAGE] }, 403);
+    }
     if (!rateLimit(`review:guest:${ip}`, GUEST_DAILY_CAP, 24 * 3600_000).ok) return json({ error: "Too many reviews from this connection today. Try again tomorrow." }, 429);
   }
 
@@ -41,6 +50,7 @@ export async function POST(req: Request) {
   const fingerprint = bodyFingerprint(input.body);
   let recent: number;
   let dup: boolean;
+  let guestRecentFromIp = 0;
   if (user) {
     [{ recent, dup }] = await sql<{ recent: number; dup: boolean }[]>`
       select (select count(*)::int from reviews where user_id = ${user.id} and created_at >= now() - interval '1 day') as recent,
@@ -55,8 +65,11 @@ export async function POST(req: Request) {
     if (row.same_camp) return json({ error: "A review for this camp was already posted from this connection." }, 409);
     if (row.recent >= GUEST_DAILY_CAP) return json({ error: "Too many reviews from this connection today. Try again tomorrow." }, 429);
     ({ recent, dup } = row);
+    guestRecentFromIp = row.recent;
   }
-  const spam = assessSpam(input, { recentReviewsByUser: recent, duplicateBodyExists: dup });
+  // Guests: links, contact details, shouting, repetition, gibberish, or a second guest review from
+  // the same connection within 24h all go to the moderation queue instead of publishing.
+  const spam = assessSpam(input, { recentReviewsByUser: recent, duplicateBodyExists: dup, guest: !user, guestRecentFromIp });
   if (spam.decision === "reject") return json({ error: REJECTED }, 422);
 
   const status = spam.decision === "publish" ? "published" : "pending";

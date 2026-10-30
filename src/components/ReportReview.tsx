@@ -9,7 +9,11 @@ export function ReportReview({ reviewId }: { reviewId: string }) {
       method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reviewId, reason }),
     });
     if (res.ok) setState("sent");
-    else { setState("error"); setMsg(res.status === 401 ? "Sign in to report a review." : "Couldn't send report."); }
+    else {
+      const body = await res.json().catch(() => ({}));
+      setState("error");
+      setMsg(res.status === 401 ? "Sign in to report a review." : res.status === 403 && body?.error ? body.error : "Couldn't send report.");
+    }
   }
   if (state === "sent") return <span className="text-xs muted">Reported — thank you.</span>;
   if (state === "error") return <span className="text-xs text-red-700">{msg}</span>;
