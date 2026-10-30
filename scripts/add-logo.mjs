@@ -136,7 +136,9 @@ async function main() {
   if (!["png", "jpg", "jpeg", "webp", "gif", "svg", "ico", "avif"].includes(ext)) throw new Error(`Not an image (${ext}): ${src}`);
   if (!o.dryRun) fs.mkdirSync(OUT_DIR, { recursive: true });
   const slug = slugify(existing?.name ?? name);
-  const logo = await writeLogo(buf, ext, slug, o.dryRun);
+  const file = await writeLogo(buf, ext, slug, o.dryRun);
+  // Replacing an existing image: bump a version query so browsers/CDNs don't keep showing the old file.
+  const logo = existing ? `${file}?v=${new Date().toISOString().replace(/\D/g, "").slice(0, 12)}` : file;
 
   const aliases = [...new Set([...(existing?.aliases ?? []), ...o.aliases].filter((a) => a && norm(a) !== norm(name)))];
   const entry = { name: existing?.name ?? name, logo, aliases, ...(o.bg ? { bg: o.bg } : existing?.bg ? { bg: existing.bg } : {}), source: /^https?:/i.test(src) ? src : existing?.source ?? "local file" };

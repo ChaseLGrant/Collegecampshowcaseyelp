@@ -7,7 +7,7 @@ import { faviconUrl, findLogoEntry, isGenericHost, normalizeOrgName, organizerDo
 describe("logo data", () => {
   it("every mapped logo file exists in public/", () => {
     for (const e of logoData as { name: string; logo: string }[]) {
-      expect(fs.existsSync(path.join(__dirname, "..", "public", e.logo)), `${e.name} -> ${e.logo}`).toBe(true);
+      expect(fs.existsSync(path.join(__dirname, "..", "public", e.logo.split("?")[0])), `${e.name} -> ${e.logo}`).toBe(true);
     }
   });
 

@@ -94,7 +94,7 @@ const GENERIC_HOST_SUFFIXES = [
   "leagueapps.com", "teamsnap.com", "sportsengine.com", "sportngin.com", "exposureevents.com", "gotsport.com",
   "playerspace.com", "abcsignup.com", "regpack.com", "campbrainregistration.com", "campbrain.com", "ultracamp.com",
   "campdoc.com", "campminder.com", "amilia.com", "jumbula.com", "sawyer.com", "bonzidev.com", "secure-sam.com",
-  "stackteamapp.com", "tourneymachine.com", "playmetrics.com", "demosphere.com", "demosphere-secure.com",
+  "stackteamapp.com", "stacksports.com", "sportsrecruits.com", "ncsa.com", "prestosports.com", "sidearmsports.com", "campscui.active.com", "teamunify.com", "tourneycentral.com", "allstarsportsnetwork.com", "playwaze.com", "sportsconnect.com", "bluesombrero.com", "imleagues.com", "tourneymachine.com", "playmetrics.com", "demosphere.com", "demosphere-secure.com",
   "ussportscamps.com", "collegecampsonline.com", "eteamz.com", "maxpreps.com", "hudl.com", "ncsasports.org",
   "fieldlevel.com", "bluefishbaseball.com", "eventconnect.io", "signupgenius.com", "zeffy.com", "givebutter.com",
   "paypal.com", "venmo.com", "square.site", "squareup.com", "stripe.com", "shopify.com", "myshopify.com",
