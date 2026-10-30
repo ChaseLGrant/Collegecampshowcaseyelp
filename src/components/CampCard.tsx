@@ -4,6 +4,7 @@ import { eventTypeLabel, sportLabel } from "@/lib/sports";
 import type { CampSummary } from "@/lib/types";
 import { RatingBadge } from "./RatingBadge";
 import { EditorialRatingBadge, EditorsPickBadge } from "./EditorialRating";
+import { OrgLogo } from "./OrgLogo";
 
 export function CampCard({ camp, showSport = false }: { camp: CampSummary; showSport?: boolean }) {
   return (
@@ -15,15 +16,20 @@ export function CampCard({ camp, showSport = false }: { camp: CampSummary; showS
         {camp.status === "cancelled" && <span className="tag bg-red-50 text-red-700">Cancelled</span>}
         {camp.isSample && <span className="tag bg-amber-50 text-amber-800">Sample</span>}
       </div>
-      <h3 className="text-base font-semibold leading-snug">
-        <Link href={`/camps/${camp.slug}`} className="hover:text-brand">
-          {camp.name}
-        </Link>
-      </h3>
-      <p className="text-sm text-navy-500">
-        {camp.institutionName ?? camp.organizerName ?? "Independent organizer"}
-        {camp.association && camp.classificationVerified ? ` · ${camp.association}${camp.division ? ` ${camp.division}` : ""}` : ""}
-      </p>
+      <div className="flex items-start gap-3">
+        <OrgLogo camp={camp} size="sm" className="mt-0.5" />
+        <div className="min-w-0 flex-1">
+          <h3 className="text-base font-semibold leading-snug">
+            <Link href={`/camps/${camp.slug}`} className="hover:text-brand">
+              {camp.name}
+            </Link>
+          </h3>
+          <p className="text-sm text-navy-500">
+            {camp.institutionName ?? camp.organizerName ?? "Independent organizer"}
+            {camp.association && camp.classificationVerified ? ` · ${camp.association}${camp.division ? ` ${camp.division}` : ""}` : ""}
+          </p>
+        </div>
+      </div>
       <dl className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
         <div>
           <dt className="sr-only">Location</dt>

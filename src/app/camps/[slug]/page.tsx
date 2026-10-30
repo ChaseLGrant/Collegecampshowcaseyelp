@@ -21,6 +21,7 @@ import { safeHttpUrl } from "@/lib/security/urls";
 import { getCurrentAccess } from "@/lib/server/access";
 import { campJsonLd, campPageTitle, jsonLdScript } from "@/lib/seo/jsonld";
 import { directoryPath, eventTypeLabel, sportLabel } from "@/lib/sports";
+import { OrgLogo } from "@/components/OrgLogo";
 
 type Params = { slug: string };
 
@@ -82,12 +83,17 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
               {camp.verificationStatus === "stale" && <span className="tag bg-amber-50 text-amber-900">May be outdated — last verified {formatDate(camp.lastVerifiedAt)}</span>}
               {camp.verificationStatus === "unverified" && <span className="tag bg-navy-50 text-navy-500">Not yet verified</span>}
             </div>
-            <h1 className="mt-2 h1">{camp.name}</h1>
-            <p className="mt-1 muted">
-              {camp.institutionName ?? "Independent event"}
-              {camp.association && camp.classificationVerified ? ` · ${camp.association}${camp.division ? ` ${camp.division}` : ""}` : ""}
-              {camp.organizerName && camp.organizerName !== camp.institutionName ? ` · Organized by ${camp.organizerName}` : ""}
-            </p>
+            <div className="mt-2 flex items-start gap-3 sm:gap-4">
+              <OrgLogo camp={camp} size="lg" className="mt-1" />
+              <div className="min-w-0 flex-1">
+                <h1 className="h1">{camp.name}</h1>
+                <p className="mt-1 muted">
+                  {camp.institutionName ?? "Independent event"}
+                  {camp.association && camp.classificationVerified ? ` · ${camp.association}${camp.division ? ` ${camp.division}` : ""}` : ""}
+                  {camp.organizerName && camp.organizerName !== camp.institutionName ? ` · Organized by ${camp.organizerName}` : ""}
+                </p>
+              </div>
+            </div>
             <div className="mt-3 space-y-1.5">
               <EditorialRatingBadge editorial={camp.editorial} size="md" showExplainer />
               <div><span className="sr-only">Parent reviews: </span><RatingBadge stats={camp.stats} size="md" reviewHref={`/camps/${camp.slug}/review`} /></div>

@@ -11,6 +11,7 @@ import { requireSql } from "@/lib/db";
 import { SPORTS } from "@/lib/sports";
 import { STATE_CODES, stateName } from "@/lib/states";
 import type { CampDetail } from "@/lib/types";
+import { OrgLogo } from "@/components/OrgLogo";
 
 export const dynamic = "force-dynamic";
 
@@ -87,8 +88,9 @@ export default async function MatchPage() {
             <ol className="space-y-4">
               {results.map((r, i) => (
                 <li key={r.camp.id} className="card p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
+                  <div className="flex items-start gap-3">
+                    <OrgLogo camp={r.camp} size="sm" className="mt-0.5" />
+                    <div className="min-w-0 flex-1">
                       <p className="text-xs muted">#{i + 1} · fit score {r.score}/100</p>
                       <Link href={`/camps/${r.camp.slug}`} className="font-semibold hover:text-brand">{r.camp.name}</Link>
                       <p className="text-sm muted">{locationLabel(r.camp.city, r.camp.state)} · {formatDateRange(r.camp.startDate, r.camp.endDate)} · {formatPrice(r.camp.priceCents)}</p>

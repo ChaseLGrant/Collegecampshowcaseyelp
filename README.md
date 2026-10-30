@@ -42,6 +42,36 @@ drives the default directory order and the homepage Editor's Picks, and it is ne
 Imported reviews are Camp Check's own paraphrases (attribution "Paraphrased from <platform>"), stored as `permitted` with the
 excerpt shown; a platform rating is shown only when it is a public aggregate.
 
+## Organizer logos
+
+Camp cards (Editor's Picks, directory, search, match) show the host's logo left of the title; the camp page shows it larger.
+No database columns are involved. Resolution order (`src/lib/logos.ts`):
+
+1. **Local logo**: `src/lib/logos.data.json` maps a name + aliases to a file in `public/logos/`. Matched on the camp's
+   institution name first, then its organizer name (case/punctuation-insensitive; also tries the name without `(...)`,
+   the text inside `(...)`, and each side of `" - "` / `" / "`).
+2. **Automatic fallback** for organizers not mapped yet (new ingests, parent submissions): the site icon of the organizer's own
+   domain, taken from the camp's `registration_url`, else `source_url` (Google s2 favicon service, 128px). Generic
+   registration/ticketing/form hosts (Ryzer, TotalCamps, Eventbrite, Google Forms, Exposure Events, LeagueApps, ...) are skipped.
+3. **Initials badge** (e.g. `PG`) when there is no usable domain or the icon fails to load / is tiny.
+
+Adding a logo for a new organizer (after each ingest):
+
+```bash
+# 1. List organizers/schools in the new import files that have no logo yet
+node scripts/add-logo.mjs --check data/new-camps.json
+# 2. For each one, find its OWN logo (site header logo, og:image or apple-touch-icon; for colleges the official athletics
+#    mark, e.g. https://a.espncdn.com/i/teamlogos/ncaa/500/<id>.png after checking the id is that school) and add it:
+node scripts/add-logo.mjs "Premier Girls Fastpitch" https://example.com/pgf-logo.png --alias "PGF"
+#    --alias "<name>"   any other spelling the data uses (repeatable)
+#    --bg "#111827"     dark tile for white/transparent marks
+#    --force            add even if the name already resolves to another entry; --dry-run to preview
+# 3. Verify and ship
+npm test && git add public/logos src/lib/logos.data.json && git commit -m "Add logo: <organizer>"
+```
+
+If unsure a logo belongs to that organization, skip it: the fallback icon/initials is better than a wrong logo.
+
 ## Docs
 
 | Doc | What's in it |

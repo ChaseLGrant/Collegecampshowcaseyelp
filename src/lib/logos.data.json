@@ -1,0 +1,1028 @@
+[
+  {
+    "name": "Arizona State University",
+    "logo": "/logos/arizona-state-university.png",
+    "aliases": [
+      "ASU",
+      "Arizona State",
+      "Sun Devils"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/9.png"
+  },
+  {
+    "name": "Auburn University",
+    "logo": "/logos/auburn-university.png",
+    "aliases": [
+      "Auburn"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2.png"
+  },
+  {
+    "name": "Azusa Pacific University",
+    "logo": "/logos/azusa-pacific-university.png",
+    "aliases": [
+      "APU",
+      "Azusa Pacific"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2049.png"
+  },
+  {
+    "name": "Cal Poly San Luis Obispo",
+    "logo": "/logos/cal-poly-san-luis-obispo.png",
+    "aliases": [
+      "Cal Poly",
+      "Cal Poly SLO"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/13.png"
+  },
+  {
+    "name": "Cal State Fullerton",
+    "logo": "/logos/cal-state-fullerton.png",
+    "aliases": [
+      "CSUF",
+      "CSU Fullerton",
+      "California State University, Fullerton"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2239.png"
+  },
+  {
+    "name": "California Baptist University",
+    "logo": "/logos/california-baptist-university.png",
+    "aliases": [
+      "CBU",
+      "Cal Baptist"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2856.png"
+  },
+  {
+    "name": "California State University, Bakersfield",
+    "logo": "/logos/california-state-university-bakersfield.png",
+    "aliases": [
+      "CSUB",
+      "CSU Bakersfield",
+      "Cal State Bakersfield"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2934.png"
+  },
+  {
+    "name": "California State University, Northridge",
+    "logo": "/logos/california-state-university-northridge.png",
+    "aliases": [
+      "CSUN",
+      "CSU Northridge",
+      "Cal State Northridge"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2463.png"
+  },
+  {
+    "name": "Christopher Newport University",
+    "logo": "/logos/christopher-newport-university.png",
+    "aliases": [
+      "Christopher Newport",
+      "CNU"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/3112.png"
+  },
+  {
+    "name": "Claremont McKenna College (Claremont-Mudd-Scripps)",
+    "logo": "/logos/claremont-mckenna-college-claremont-mudd-scripps.png",
+    "aliases": [
+      "Claremont McKenna College",
+      "Claremont-Mudd-Scripps",
+      "CMS"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/17.png"
+  },
+  {
+    "name": "Colorado College",
+    "logo": "/logos/colorado-college.png",
+    "aliases": [],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2144.png"
+  },
+  {
+    "name": "Crown College",
+    "logo": "/logos/crown-college.png",
+    "aliases": [],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/509.png"
+  },
+  {
+    "name": "Dakota State University",
+    "logo": "/logos/dakota-state-university.png",
+    "aliases": [
+      "Dakota State"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/512.png"
+  },
+  {
+    "name": "Duke University",
+    "logo": "/logos/duke-university.png",
+    "aliases": [
+      "Duke"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/150.png"
+  },
+  {
+    "name": "Florida State University",
+    "logo": "/logos/florida-state-university.png",
+    "aliases": [
+      "Florida State",
+      "FSU"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/52.png"
+  },
+  {
+    "name": "Grand Canyon University",
+    "logo": "/logos/grand-canyon-university.png",
+    "aliases": [
+      "GCU",
+      "Grand Canyon"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2253.png"
+  },
+  {
+    "name": "Harding University",
+    "logo": "/logos/harding-university.png",
+    "aliases": [
+      "Harding"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2264.png"
+  },
+  {
+    "name": "Long Beach State",
+    "logo": "/logos/long-beach-state.png",
+    "aliases": [
+      "CSULB",
+      "Cal State Long Beach",
+      "California State University, Long Beach",
+      "LBSU"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/299.png"
+  },
+  {
+    "name": "Loras College",
+    "logo": "/logos/loras-college.png",
+    "aliases": [
+      "Loras"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/263.png"
+  },
+  {
+    "name": "Macalester College",
+    "logo": "/logos/macalester-college.png",
+    "aliases": [
+      "Macalester"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2359.png"
+  },
+  {
+    "name": "McKendree University",
+    "logo": "/logos/mckendree-university.png",
+    "aliases": [
+      "McKendree"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2816.png"
+  },
+  {
+    "name": "Northwestern University",
+    "logo": "/logos/northwestern-university.png",
+    "aliases": [
+      "Northwestern"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/77.png"
+  },
+  {
+    "name": "Pacific Lutheran University",
+    "logo": "/logos/pacific-lutheran-university.png",
+    "aliases": [
+      "PLU",
+      "Pacific Lutheran"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2486.png"
+  },
+  {
+    "name": "Pepperdine University",
+    "logo": "/logos/pepperdine-university.png",
+    "aliases": [
+      "Pepperdine"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2492.png"
+  },
+  {
+    "name": "Pomona-Pitzer Colleges",
+    "logo": "/logos/pomona-pitzer-colleges.png",
+    "aliases": [
+      "Pomona-Pitzer",
+      "Pomona Pitzer"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2923.png"
+  },
+  {
+    "name": "Princeton University",
+    "logo": "/logos/princeton-university.png",
+    "aliases": [
+      "Princeton"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/163.png"
+  },
+  {
+    "name": "Sacramento State",
+    "logo": "/logos/sacramento-state.png",
+    "aliases": [
+      "Sac State",
+      "CSUS",
+      "California State University, Sacramento"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/16.png"
+  },
+  {
+    "name": "Saint Joseph's University",
+    "logo": "/logos/saint-joseph-s-university.png",
+    "aliases": [
+      "Saint Joseph's",
+      "St. Joseph's University"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2603.png"
+  },
+  {
+    "name": "Saint Martin's University",
+    "logo": "/logos/saint-martin-s-university.png",
+    "aliases": [
+      "Saint Martin's",
+      "St. Martin's University"
+    ],
+    "source": "https://a.espncdn.com/guid/08d18faa-f47d-3616-a74e-4dd0c338c6c2/logos/default.png"
+  },
+  {
+    "name": "Saint Mary's College of California",
+    "logo": "/logos/saint-mary-s-college-of-california.png",
+    "aliases": [
+      "Saint Mary's College",
+      "St. Mary's College of California",
+      "Saint Mary's (CA)"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2608.png"
+  },
+  {
+    "name": "San Diego State University",
+    "logo": "/logos/san-diego-state-university.png",
+    "aliases": [
+      "SDSU",
+      "San Diego State",
+      "San Diego State Aztecs"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/21.png"
+  },
+  {
+    "name": "Santa Clara University",
+    "logo": "/logos/santa-clara-university.png",
+    "aliases": [
+      "Santa Clara",
+      "SCU"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2541.png"
+  },
+  {
+    "name": "Stanford University",
+    "logo": "/logos/stanford-university.png",
+    "aliases": [
+      "Stanford"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/24.png"
+  },
+  {
+    "name": "Texas Tech University",
+    "logo": "/logos/texas-tech-university.png",
+    "aliases": [
+      "Texas Tech"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2641.png"
+  },
+  {
+    "name": "The Ohio State University",
+    "logo": "/logos/the-ohio-state-university.png",
+    "aliases": [
+      "Ohio State University",
+      "Ohio State"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/194.png"
+  },
+  {
+    "name": "UC Davis",
+    "logo": "/logos/uc-davis.png",
+    "aliases": [
+      "University of California, Davis",
+      "University of California Davis"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/302.png"
+  },
+  {
+    "name": "UC Riverside",
+    "logo": "/logos/uc-riverside.png",
+    "aliases": [
+      "UCR",
+      "University of California, Riverside",
+      "University of California Riverside"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/27.png"
+  },
+  {
+    "name": "UC Santa Barbara",
+    "logo": "/logos/uc-santa-barbara.png",
+    "aliases": [
+      "UCSB",
+      "University of California, Santa Barbara",
+      "University of California Santa Barbara"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2540.png"
+  },
+  {
+    "name": "UCLA",
+    "logo": "/logos/ucla.png",
+    "aliases": [
+      "University of California, Los Angeles",
+      "University of California Los Angeles"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/26.png"
+  },
+  {
+    "name": "United States Air Force Academy",
+    "logo": "/logos/united-states-air-force-academy.png",
+    "aliases": [
+      "Air Force",
+      "Air Force Academy",
+      "USAFA"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2005.png"
+  },
+  {
+    "name": "University of Arizona",
+    "logo": "/logos/university-of-arizona.png",
+    "aliases": [
+      "Arizona"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/12.png"
+  },
+  {
+    "name": "University of California San Diego",
+    "logo": "/logos/university-of-california-san-diego.png",
+    "aliases": [
+      "UCSD",
+      "UC San Diego",
+      "University of California, San Diego"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/28.png"
+  },
+  {
+    "name": "University of California, Irvine",
+    "logo": "/logos/university-of-california-irvine.png",
+    "aliases": [
+      "UCI",
+      "UC Irvine",
+      "University of California Irvine"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/300.png"
+  },
+  {
+    "name": "University of Denver",
+    "logo": "/logos/university-of-denver.png",
+    "aliases": [
+      "Denver"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2172.png"
+  },
+  {
+    "name": "University of Indianapolis",
+    "logo": "/logos/university-of-indianapolis.png",
+    "aliases": [
+      "UIndy"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2292.png"
+  },
+  {
+    "name": "University of Mississippi",
+    "logo": "/logos/university-of-mississippi.png",
+    "aliases": [
+      "Ole Miss"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/145.png"
+  },
+  {
+    "name": "University of New Hampshire",
+    "logo": "/logos/university-of-new-hampshire.png",
+    "aliases": [
+      "UNH",
+      "New Hampshire"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/160.png"
+  },
+  {
+    "name": "University of Northern Colorado",
+    "logo": "/logos/university-of-northern-colorado.png",
+    "aliases": [
+      "UNC Bears",
+      "Northern Colorado"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2458.png"
+  },
+  {
+    "name": "University of Oregon",
+    "logo": "/logos/university-of-oregon.png",
+    "aliases": [
+      "Oregon"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2483.png"
+  },
+  {
+    "name": "University of Redlands",
+    "logo": "/logos/university-of-redlands.png",
+    "aliases": [
+      "Redlands"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/29.png"
+  },
+  {
+    "name": "University of San Francisco",
+    "logo": "/logos/university-of-san-francisco.png",
+    "aliases": [
+      "USF Dons"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2539.png"
+  },
+  {
+    "name": "University of South Carolina",
+    "logo": "/logos/university-of-south-carolina.png",
+    "aliases": [
+      "South Carolina"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2579.png"
+  },
+  {
+    "name": "University of Southern California",
+    "logo": "/logos/university-of-southern-california.png",
+    "aliases": [
+      "USC"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/30.png"
+  },
+  {
+    "name": "University of Utah",
+    "logo": "/logos/university-of-utah.png",
+    "aliases": [
+      "Utah"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/254.png"
+  },
+  {
+    "name": "University of Wisconsin-Whitewater",
+    "logo": "/logos/university-of-wisconsin-whitewater.png",
+    "aliases": [
+      "UW-Whitewater",
+      "Wisconsin-Whitewater"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2745.png"
+  },
+  {
+    "name": "University of the Pacific",
+    "logo": "/logos/university-of-the-pacific.png",
+    "aliases": [
+      "Pacific"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/279.png"
+  },
+  {
+    "name": "Washington State University",
+    "logo": "/logos/washington-state-university.png",
+    "aliases": [
+      "Washington State",
+      "WSU"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/265.png"
+  },
+  {
+    "name": "Widener University",
+    "logo": "/logos/widener-university.png",
+    "aliases": [
+      "Widener"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2725.png"
+  },
+  {
+    "name": "Wilmington College",
+    "logo": "/logos/wilmington-college.png",
+    "aliases": [
+      "Wilmington College (OH)"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2733.png"
+  },
+  {
+    "name": "Winona State University",
+    "logo": "/logos/winona-state-university.png",
+    "aliases": [
+      "Winona State"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/2851.png"
+  },
+  {
+    "name": "Arizona Christian University",
+    "logo": "/logos/arizona-christian-university.png",
+    "aliases": [
+      "ACU Firestorm"
+    ],
+    "source": "https://acufirestorm.com/"
+  },
+  {
+    "name": "Biola University",
+    "logo": "/logos/biola-university.png",
+    "aliases": [
+      "Biola"
+    ],
+    "source": "https://athletics.biola.edu/"
+  },
+  {
+    "name": "Cal State San Bernardino",
+    "logo": "/logos/cal-state-san-bernardino.png",
+    "aliases": [
+      "CSUSB",
+      "California State University, San Bernardino"
+    ],
+    "source": "https://csusbathletics.com/"
+  },
+  {
+    "name": "Cal State San Marcos",
+    "logo": "/logos/cal-state-san-marcos.png",
+    "aliases": [
+      "CSUSM",
+      "California State University, San Marcos",
+      "CSU San Marcos"
+    ],
+    "source": "https://csusmcougars.com/"
+  },
+  {
+    "name": "Cal State University, Monterey Bay",
+    "logo": "/logos/cal-state-university-monterey-bay.png",
+    "aliases": [
+      "CSUMB",
+      "California State University, Monterey Bay",
+      "Cal State Monterey Bay"
+    ],
+    "source": "https://otterathletics.com/"
+  },
+  {
+    "name": "Calvin University",
+    "logo": "/logos/calvin-university.png",
+    "aliases": [
+      "Calvin"
+    ],
+    "source": "https://calvinknights.com/"
+  },
+  {
+    "name": "Cedarville University",
+    "logo": "/logos/cedarville-university.png",
+    "aliases": [
+      "Cedarville"
+    ],
+    "source": "https://yellowjackets.cedarville.edu/"
+  },
+  {
+    "name": "College of Saint Mary",
+    "logo": "/logos/college-of-saint-mary.png",
+    "aliases": [],
+    "source": "https://csmflames.com/"
+  },
+  {
+    "name": "Concordia University Irvine",
+    "logo": "/logos/concordia-university-irvine.png",
+    "aliases": [
+      "CUI",
+      "Concordia Irvine"
+    ],
+    "source": "https://cuigoldeneagles.com/"
+  },
+  {
+    "name": "Fresno Pacific University",
+    "logo": "/logos/fresno-pacific-university.png",
+    "aliases": [
+      "Fresno Pacific",
+      "FPU"
+    ],
+    "source": "https://fpusunbirds.com/"
+  },
+  {
+    "name": "Luther College",
+    "logo": "/logos/luther-college.png",
+    "aliases": [],
+    "source": "https://luthernorse.com/"
+  },
+  {
+    "name": "Menlo College",
+    "logo": "/logos/menlo-college.png",
+    "aliases": [],
+    "source": "https://menloathletics.com/"
+  },
+  {
+    "name": "Point Loma Nazarene University",
+    "logo": "/logos/point-loma-nazarene-university.png",
+    "aliases": [
+      "PLNU",
+      "Point Loma"
+    ],
+    "source": "https://plnusealions.com/"
+  },
+  {
+    "name": "University of Colorado Colorado Springs",
+    "logo": "/logos/university-of-colorado-colorado-springs.png",
+    "aliases": [
+      "UCCS",
+      "UC Colorado Springs"
+    ],
+    "source": "https://gomountainlions.com/"
+  },
+  {
+    "name": "Vanguard University",
+    "logo": "/logos/vanguard-university.png",
+    "aliases": [
+      "Vanguard"
+    ],
+    "source": "https://vanguardlions.com/"
+  },
+  {
+    "name": "Wesleyan University",
+    "logo": "/logos/wesleyan-university.png",
+    "aliases": [
+      "Wesleyan (CT)"
+    ],
+    "source": "https://athletics.wesleyan.edu/"
+  },
+  {
+    "name": "Perfect Game",
+    "logo": "/logos/perfect-game.png",
+    "aliases": [
+      "PG",
+      "Perfect Game USA",
+      "PerfectGame"
+    ],
+    "source": "https://www.perfectgame.org"
+  },
+  {
+    "name": "Prep Baseball Report",
+    "logo": "/logos/prep-baseball-report.png",
+    "aliases": [
+      "PBR",
+      "Prep Baseball",
+      "Prep Baseball (PBR)",
+      "Prep Baseball (PBR) California",
+      "Prep Baseball (PBR) Oregon",
+      "PBR California",
+      "PBR Oregon"
+    ],
+    "source": "https://www.prepbaseballreport.com"
+  },
+  {
+    "name": "College Baseball Prospects (College Coaches Showcase Camp)",
+    "logo": "/logos/college-baseball-prospects-college-coaches-showcase-camp.png",
+    "aliases": [
+      "College Baseball Prospects",
+      "College Coaches Showcase Camp",
+      "CCSC"
+    ],
+    "source": "https://www.collegebaseballprospects.com/"
+  },
+  {
+    "name": "Showball Baseball",
+    "logo": "/logos/showball-baseball.png",
+    "aliases": [
+      "Showball"
+    ],
+    "source": "https://showballbaseball.com/"
+  },
+  {
+    "name": "Elite Basketball Circuit",
+    "logo": "/logos/elite-basketball-circuit.png",
+    "aliases": [
+      "EBC",
+      "Elite Basketball Circuit x Ballislife"
+    ],
+    "source": "https://elitebasketballcircuit.com/"
+  },
+  {
+    "name": "Naismith Basketball Hall of Fame",
+    "logo": "/logos/naismith-basketball-hall-of-fame.png",
+    "aliases": [
+      "Basketball Hall of Fame",
+      "Naismith Memorial Basketball Hall of Fame",
+      "Hoop Hall"
+    ],
+    "source": "https://www.hoophall.com/"
+  },
+  {
+    "name": "Section 7",
+    "logo": "/logos/section-7.png",
+    "aliases": [
+      "Section 7 (ABCA / Arizona Sports & Entertainment Commission)",
+      "Section7"
+    ],
+    "source": "https://www.section7bb.com/"
+  },
+  {
+    "name": "MADE Hoops",
+    "logo": "/logos/made-hoops.png",
+    "aliases": [
+      "MADE"
+    ],
+    "source": "https://www.madehoops.com/",
+    "bg": "#111827"
+  },
+  {
+    "name": "Game Time Events USA",
+    "logo": "/logos/game-time-events-usa.png",
+    "aliases": [
+      "Game Time Events"
+    ],
+    "source": "https://gametimeeventsusa.com/"
+  },
+  {
+    "name": "Southern California Interscholastic Basketball Coaches Association (SCIBCA)",
+    "logo": "/logos/southern-california-interscholastic-basketball-coaches-assoc.png",
+    "aliases": [
+      "SCIBCA"
+    ],
+    "source": "https://socal.nhsbca.org"
+  },
+  {
+    "name": "Polynesian Bowl",
+    "logo": "/logos/polynesian-bowl.png",
+    "aliases": [
+      "Shriners Sports / Polynesian Bowl"
+    ],
+    "source": "https://www.polynesianbowl.com",
+    "bg": "#111827"
+  },
+  {
+    "name": "All-American Exposure Camp (AAE)",
+    "logo": "/logos/all-american-exposure-camp-aae.png",
+    "aliases": [
+      "All-American Exposure Camp",
+      "AAE",
+      "AAE Camp"
+    ],
+    "source": "https://www.aaecamp.com",
+    "bg": "#111827"
+  },
+  {
+    "name": "Kicking World",
+    "logo": "/logos/kicking-world.png",
+    "aliases": [],
+    "source": "https://www.kickingworld.com"
+  },
+  {
+    "name": "Kohl's Professional Camps",
+    "logo": "/logos/kohl-s-professional-camps.png",
+    "aliases": [
+      "Kohl's Kicking",
+      "Kohls Kicking",
+      "Kohl's Kicking Camps"
+    ],
+    "source": "https://www.kohlskicking.com"
+  },
+  {
+    "name": "Football Hotbed",
+    "logo": "/logos/football-hotbed.png",
+    "aliases": [],
+    "source": "https://footballhotbed.com"
+  },
+  {
+    "name": "Prep Redzone",
+    "logo": "/logos/prep-redzone.png",
+    "aliases": [
+      "PrepRedzone"
+    ],
+    "source": "https://prepredzone.com"
+  },
+  {
+    "name": "USA Football",
+    "logo": "/logos/usa-football.png",
+    "aliases": [],
+    "source": "https://usafootball.com"
+  },
+  {
+    "name": "Manning Passing Academy",
+    "logo": "/logos/manning-passing-academy.png",
+    "aliases": [
+      "MPA"
+    ],
+    "source": "https://www.manningpassingacademy.com"
+  },
+  {
+    "name": "Grit Football Camp",
+    "logo": "/logos/grit-football-camp.png",
+    "aliases": [],
+    "source": "https://gritfootballcamp.com"
+  },
+  {
+    "name": "Blue-Grey Football",
+    "logo": "/logos/blue-grey-football.png",
+    "aliases": [
+      "Blue Grey Football",
+      "Blue-Grey All-American Bowl"
+    ],
+    "source": "https://bluegreyfootball.com"
+  },
+  {
+    "name": "College Football Prospect ID",
+    "logo": "/logos/college-football-prospect-id.png",
+    "aliases": [],
+    "source": "https://www.collegefootballprospectid.com"
+  },
+  {
+    "name": "SAC Showcase",
+    "logo": "/logos/sac-showcase.png",
+    "aliases": [
+      "SAC Football Showcase"
+    ],
+    "source": "https://www.sacfootballshowcase.com"
+  },
+  {
+    "name": "Adrenaline Lacrosse",
+    "logo": "/logos/adrenaline-lacrosse.png",
+    "aliases": [
+      "Adrenaline"
+    ],
+    "source": "https://www.adrln.com/"
+  },
+  {
+    "name": "Elite 12 Lacrosse",
+    "logo": "/logos/elite-12-lacrosse.png",
+    "aliases": [
+      "Elite 12"
+    ],
+    "source": "https://www.elite12lacrosse.com/"
+  },
+  {
+    "name": "IWLCA Recruiting Series",
+    "logo": "/logos/iwlca-recruiting-series.png",
+    "aliases": [
+      "IWLCA"
+    ],
+    "source": "https://iwlcarecruiting.com/"
+  },
+  {
+    "name": "First Class Lacrosse",
+    "logo": "/logos/first-class-lacrosse.png",
+    "aliases": [
+      "1st Class Lacrosse"
+    ],
+    "source": "https://www.1stclasslax.com/"
+  },
+  {
+    "name": "Core Lacrosse Events",
+    "logo": "/logos/core-lacrosse-events.png",
+    "aliases": [
+      "Core Lacrosse"
+    ],
+    "source": "https://corelaxevents.com/",
+    "bg": "#111827"
+  },
+  {
+    "name": "Buku Events",
+    "logo": "/logos/buku-events.png",
+    "aliases": [
+      "Buku"
+    ],
+    "source": "https://www.buku.events/"
+  },
+  {
+    "name": "Apex Lacrosse Events",
+    "logo": "/logos/apex-lacrosse-events.png",
+    "aliases": [
+      "Apex Lacrosse"
+    ],
+    "source": "https://apexlacrosseevents.com/"
+  },
+  {
+    "name": "Prime Time Lacrosse Events",
+    "logo": "/logos/prime-time-lacrosse-events.png",
+    "aliases": [
+      "Prime Time Lacrosse"
+    ],
+    "source": "https://primetimelacrosse.com/"
+  },
+  {
+    "name": "Beach Futbol Academy",
+    "logo": "/logos/beach-futbol-academy.png",
+    "aliases": [],
+    "source": "https://www.beachfutbolacademy.com/"
+  },
+  {
+    "name": "Surf Cup Sports",
+    "logo": "/logos/surf-cup-sports.png",
+    "aliases": [
+      "Surf Sports",
+      "Surf Cup"
+    ],
+    "source": "https://surfsports.com/"
+  },
+  {
+    "name": "Girls Academy League",
+    "logo": "/logos/girls-academy-league.png",
+    "aliases": [
+      "Girls Academy",
+      "GA"
+    ],
+    "source": "https://girlsacademyleague.com/"
+  },
+  {
+    "name": "ECNL (Elite Clubs National League)",
+    "logo": "/logos/ecnl-elite-clubs-national-league.png",
+    "aliases": [
+      "ECNL",
+      "Elite Clubs National League"
+    ],
+    "source": "https://theecnl.com/"
+  },
+  {
+    "name": "MLS NEXT",
+    "logo": "/logos/mls-next.png",
+    "aliases": [
+      "MLS Next"
+    ],
+    "source": "https://www.mlssoccer.com/mlsnext/"
+  },
+  {
+    "name": "Triple Crown Sports",
+    "logo": "/logos/triple-crown-sports.png",
+    "aliases": [
+      "Triple Crown"
+    ],
+    "source": "https://triplecrownsports.com/"
+  },
+  {
+    "name": "Triple Crown Sports - TC So Cal Fastpitch",
+    "logo": "/logos/triple-crown-sports-tc-so-cal-fastpitch.png",
+    "aliases": [
+      "TC So Cal Fastpitch",
+      "Triple Crown Fastpitch"
+    ],
+    "source": "https://www.tcsocalfastpitch.com/"
+  },
+  {
+    "name": "The Alliance Fastpitch / Connect Sports",
+    "logo": "/logos/the-alliance-fastpitch-connect-sports.png",
+    "aliases": [
+      "The Alliance Fastpitch",
+      "Alliance Fastpitch"
+    ],
+    "source": "https://allianceopennationals.com/"
+  },
+  {
+    "name": "Junior Volleyball Association (JVA)",
+    "logo": "/logos/junior-volleyball-association-jva.png",
+    "aliases": [
+      "JVA",
+      "Junior Volleyball Association"
+    ],
+    "source": "https://jvavolleyball.org/"
+  },
+  {
+    "name": "Amateur Athletic Union (AAU)",
+    "logo": "/logos/amateur-athletic-union-aau.png",
+    "aliases": [
+      "AAU",
+      "Amateur Athletic Union"
+    ],
+    "source": "https://www.aausports.org/"
+  },
+  {
+    "name": "USA Volleyball",
+    "logo": "/logos/usa-volleyball.png",
+    "aliases": [
+      "USAV"
+    ],
+    "source": "https://usavolleyball.org/"
+  },
+  {
+    "name": "Encore Volleyball Club",
+    "logo": "/logos/encore-volleyball-club.png",
+    "aliases": [
+      "Encore Volleyball"
+    ],
+    "source": "https://www.encorevolleyball.com/"
+  },
+  {
+    "name": "AIM Sports Group (SoCal Cup)",
+    "logo": "/logos/aim-sports-group-socal-cup.png",
+    "aliases": [
+      "AIM Sports Group",
+      "SoCal Cup"
+    ],
+    "source": "https://socalcupvolleyball.com/"
+  },
+  {
+    "name": "Women's College Volleyball Prospect ID Showcase (Ryzer)",
+    "logo": "/logos/women-s-college-volleyball-prospect-id-showcase-ryzer.png",
+    "aliases": [
+      "Women's College Volleyball Prospect ID Showcase",
+      "College Volleyball Prospect ID"
+    ],
+    "source": "https://www.collegevolleyballprospectid.com/"
+  }
+]
