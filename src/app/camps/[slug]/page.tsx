@@ -207,6 +207,8 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
                       <p className="font-semibold">{r.title}</p>
                     </div>
                     <p className="mt-1 text-xs muted">
+                      {r.authorName && <span className="font-medium text-navy-700">{r.authorName} · </span>}
+                      <span className="tag mr-1 bg-navy-50 text-navy-700">{r.isGuest ? "Guest" : "Member"}</span>
                       {r.attendeeRole === "parent" ? "Parent" : r.attendeeRole === "athlete" ? "Athlete" : r.attendeeRole === "coach" ? "Coach" : "Attendee"}
                       {r.attendedYear ? ` · attended ${r.attendedYear}` : ""} · {formatDate(r.createdAt)}
                       {r.verified && <span className="ml-1 tag bg-emerald-50 text-emerald-800">Verified attendance</span>}

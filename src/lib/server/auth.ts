@@ -20,9 +20,10 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   if (!id || !/^[0-9a-f-]{36}$/i.test(id)) return null;
   const sql = getSql();
   if (!sql) return null;
-  const [row] = await sql<{ id: string; email: string; role: SessionUser["role"] | null; age_confirmed_at: string | null }[]>`
-    select u.id, u.email, p.role, p.age_confirmed_at from users u left join profiles p on p.id = u.id where u.id = ${id}`;
-  if (!row) return null;
+  const [row] = await sql<{ id: string; email: string; role: SessionUser["role"] | null; age_confirmed_at: string | null; is_guest: boolean }[]>`
+    select u.id, u.email, p.role, p.age_confirmed_at, u.is_guest from users u left join profiles p on p.id = u.id where u.id = ${id}`;
+  // Guest reviewer rows are never a session (and so never staff), whatever a token claims.
+  if (!row || row.is_guest) return null;
   return { id: row.id, email: row.email, role: row.role ?? "user", ageConfirmed: Boolean(row.age_confirmed_at) };
 });
 

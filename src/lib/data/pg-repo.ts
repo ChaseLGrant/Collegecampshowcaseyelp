@@ -90,9 +90,13 @@ export function makePgRepository(sql: Sql): CampRepository {
 
     async listReviews(campId) {
       const rows = await sql`
-        select id, camp_id, attendee_role, attended_year, rating_value, rating_instruction, rating_exposure, rating_organization,
-               rating_overall, title, body, would_recommend, verification, created_at
-        from reviews where camp_id = ${campId} and status = 'published' order by created_at desc limit 100`;
+        select r.id, r.camp_id, r.attendee_role, r.attended_year, r.rating_value, r.rating_instruction, r.rating_exposure,
+               r.rating_organization, r.rating_overall, r.title, r.body, r.would_recommend, r.verification, r.created_at,
+               r.guest_name, p.display_name, coalesce(u.is_guest, false) as is_guest
+        from reviews r
+        left join users u on u.id = r.user_id
+        left join profiles p on p.id = r.user_id
+        where r.camp_id = ${campId} and r.status = 'published' order by r.created_at desc limit 100`;
       return rows.map(mapReviewRow);
     },
 

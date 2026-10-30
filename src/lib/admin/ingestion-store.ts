@@ -26,7 +26,7 @@ export function makeIngestionStore(sql: Sql): IngestionStore {
     async finishRun(runId, r: RunResult) {
       await sql`
         update ingestion_runs set status = ${r.status}, finished_at = now(), items_found = ${r.found}, items_queued = ${r.queued},
-          items_skipped = ${r.skipped}, error = ${r.error}, log = ${JSON.stringify(r.log.slice(0, 200))}::jsonb
+          items_skipped = ${r.skipped}, error = ${r.error}, log = ${JSON.stringify(r.log.slice(0, 200))}::text::jsonb
         where id = ${runId}`;
     },
     async existingCamps(): Promise<ExistingCampRef[]> {
@@ -39,12 +39,13 @@ export function makeIngestionStore(sql: Sql): IngestionStore {
     },
     async enqueue(items: QueueInsert[]) {
       let n = 0;
+      // ::text::jsonb — a bare ::jsonb cast makes postgres.js send the JSON text as a jsonb *string* scalar.
       // A pending item with the same fingerprint may appear concurrently: skip duplicates via the partial unique index.
       for (const i of items) {
         try {
           const res = await sql`
             insert into discovery_queue (kind, source_id, run_id, candidate, source_url, fingerprint, sport_confidence, matched_camp_id, duplicate_score, status, submitted_by)
-            values (${i.kind}, ${i.sourceId}, ${i.runId}, ${JSON.stringify(i.candidate)}::jsonb, ${i.sourceUrl}, ${i.fingerprint},
+            values (${i.kind}, ${i.sourceId}, ${i.runId}, ${JSON.stringify(i.candidate)}::text::jsonb, ${i.sourceUrl}, ${i.fingerprint},
                     ${i.sportConfidence}, ${i.matchedCampId}, ${i.duplicateScore}, ${i.status}, ${i.submittedBy ?? null})
             on conflict do nothing returning id`;
           n += res.length;

@@ -70,6 +70,10 @@ export interface CommunityReview {
   wouldRecommend: boolean | null;
   verified: boolean;
   createdAt: string;
+  /** Public short name ("Sarah M.") — profile display name for members, the given name for guests. */
+  authorName?: string | null;
+  /** True when posted without an account. */
+  isGuest?: boolean;
 }
 
 export type ExternalProvenance =

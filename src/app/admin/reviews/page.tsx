@@ -13,11 +13,12 @@ export default async function ModerationPage({ searchParams }: { searchParams: P
     tab === "reports" ? db`r.id in (select review_id from review_reports where not resolved)` : db`true`;
   const data = await db`
     select r.id, r.title, r.body, r.status, r.spam_score::float as spam_score, r.verification, r.verification_file_path, r.created_at, r.rating_overall,
+      r.guest_name, r.guest_email, coalesce((select u.is_guest from users u where u.id = r.user_id), false) as is_guest,
       json_build_object('name', c.name, 'slug', c.slug) as camps,
       coalesce((select json_agg(json_build_object('reason', rr.reason, 'resolved', rr.resolved)) from review_reports rr where rr.review_id = r.id), '[]') as review_reports
     from reviews r join camps c on c.id = r.camp_id
     where ${filter} order by r.created_at asc limit ${tab === "reports" ? 200 : 50}`;
-  type Row = { id: string; title: string; body: string; status: string; spam_score: number; verification: string; verification_file_path: string | null; created_at: string; rating_overall: number; camps: { name: string; slug: string } | null; review_reports: { reason: string; resolved: boolean }[] };
+  type Row = { id: string; title: string; body: string; status: string; spam_score: number; verification: string; verification_file_path: string | null; created_at: string; rating_overall: number; guest_name: string | null; guest_email: string | null; is_guest: boolean; camps: { name: string; slug: string } | null; review_reports: { reason: string; resolved: boolean }[] };
   const rows = data as unknown as Row[];
   const proofUrls: Record<string, string> = {};
   for (const r of rows) {
@@ -34,6 +35,7 @@ export default async function ModerationPage({ searchParams }: { searchParams: P
       {rows.map((r) => (
         <div key={r.id} className="card p-4 text-sm">
           <p className="font-semibold">{r.title} <span className="font-normal muted">· {r.camps?.name} · {r.rating_overall}★ · {formatDate(r.created_at)} · spam score {r.spam_score} · {r.status}</span></p>
+          <p className="text-xs muted">{r.is_guest ? <>Guest: {r.guest_name}{r.guest_email ? <> · {r.guest_email} (private)</> : " · no email"}</> : "Member"}</p>
           <p className="mt-1 whitespace-pre-line">{r.body}</p>
           {r.review_reports.filter((x) => !x.resolved).length > 0 && <p className="mt-1 text-xs text-red-700">Reports: {r.review_reports.filter((x) => !x.resolved).map((x) => x.reason).join(", ")}</p>}
           <form action={moderateReview} className="mt-2 flex flex-wrap items-center gap-2">

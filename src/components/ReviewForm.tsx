@@ -11,9 +11,10 @@ type Draft = {
   wouldRecommend: "" | "yes" | "no";
   confirmAdult: boolean;
   confirmFirsthand: boolean;
+  guestName: string;
 };
 
-const EMPTY: Draft = { ratings: {}, attendeeRole: "", attendedYear: "", title: "", body: "", wouldRecommend: "", confirmAdult: false, confirmFirsthand: false };
+const EMPTY: Draft = { ratings: {}, attendeeRole: "", attendedYear: "", title: "", body: "", wouldRecommend: "", confirmAdult: false, confirmFirsthand: false, guestName: "" };
 
 function StarInput({ name, label, value, onChange }: { name: string; label: string; value?: number; onChange: (v: number) => void }) {
   return (
@@ -41,6 +42,9 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
   const [errors, setErrors] = useState<string[]>([]);
   const [status, setStatus] = useState<"idle" | "sending" | "published" | "pending">("idle");
   const [reviewId, setReviewId] = useState<string | null>(null);
+  const [postedAsGuest, setPostedAsGuest] = useState(false);
+  // Kept out of the saved draft on purpose (shared devices).
+  const [guestEmail, setGuestEmail] = useState("");
   const [proofState, setProofState] = useState<"idle" | "uploading" | "done" | "error">("idle");
   const started = useRef(Date.now());
   const honeypot = useRef<HTMLInputElement>(null);
@@ -66,6 +70,8 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
     if (!d.attendeeRole) e.push("Tell us who attended.");
     if (d.title.trim().length < 4) e.push("Add a short headline.");
     if (d.body.trim().length < 40) e.push("Write at least 40 characters about your experience.");
+    if (!signedIn && d.guestName.trim().length < 2) e.push("Add your name (shown as first name and last initial).");
+    if (!signedIn && guestEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())) e.push("Enter a valid email or leave it blank.");
     if (!d.confirmAdult) e.push("Reviewers must be 18 or older.");
     if (!d.confirmFirsthand) e.push("Confirm this is your own first-hand experience.");
     return e;
@@ -76,8 +82,6 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
     const e = localErrors();
     setErrors(e);
     if (e.length) return;
-    const goLogin = () => { window.location.href = `/login?next=${encodeURIComponent(`/camps/${camp.slug}/review?resume=1`)}&reason=review`; };
-    if (!signedIn) return goLogin(); // draft is already saved in this browser
     setStatus("sending");
     const res = await fetch("/api/reviews", {
       method: "POST",
@@ -94,13 +98,14 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
         confirmFirsthand: d.confirmFirsthand,
         website: honeypot.current?.value ?? "",
         elapsedMs: Date.now() - started.current,
+        ...(signedIn ? {} : { guestName: d.guestName.trim(), guestEmail: guestEmail.trim() || undefined }),
       }),
     });
-    if (res.status === 401) return goLogin();
     const json = await res.json().catch(() => ({}));
     if (!res.ok) { setStatus("idle"); setErrors(json.errors ?? [json.error ?? "Something went wrong. Your draft is saved."]); return; }
     try { localStorage.removeItem(key); } catch { /* ignore */ }
     setReviewId(json.id);
+    setPostedAsGuest(Boolean(json.guest));
     setStatus(json.status === "published" ? "published" : "pending");
   }
 
@@ -119,6 +124,9 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
       <div className="card p-6">
         <p className="text-lg font-semibold">Thank you — your review {status === "published" ? "is live" : "was received"}.</p>
         <p className="mt-1 text-sm muted">{status === "published" ? "It now appears on the camp page." : "It will appear after a quick moderation check."}</p>
+        {postedAsGuest ? (
+          <p className="mt-4 border-t border-navy-50 pt-4 text-sm muted">Posted as a guest. Want a &ldquo;Verified attendance&rdquo; badge on future reviews? <a className="link" href={`/login?mode=signup&next=${encodeURIComponent(`/camps/${camp.slug}`)}`}>Create a free account</a>.</p>
+        ) : (
         <div className="mt-5 border-t border-navy-50 pt-4">
           <p className="font-semibold">Optional: verify your attendance</p>
           <p className="mt-1 text-sm muted">Upload a registration confirmation or receipt (JPG, PNG, WebP or PDF, up to 5 MB). Only CampGrade moderators can see it; your review gets a &ldquo;Verified attendance&rdquo; badge once confirmed. Feel free to cover payment details.</p>
@@ -128,6 +136,7 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
           )}
           {proofState === "error" && <p className="mt-2 text-sm text-red-700">Upload failed. You can try again from your account page.</p>}
         </div>
+        )}
         <a href={`/camps/${camp.slug}`} className="btn-secondary mt-5">Back to {camp.name}</a>
       </div>
     );
@@ -135,7 +144,7 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
 
   return (
     <form onSubmit={submit} className="space-y-6" noValidate>
-      {restored && <p className="rounded-lg bg-brand-50 p-3 text-sm text-brand">We saved your review while you signed in. Check it over and submit.</p>}
+      {restored && <p className="rounded-lg bg-brand-50 p-3 text-sm text-brand">We restored the draft you started on this device. Check it over and submit.</p>}
       {!enabled && <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Reviews open once the database is connected. You can still try the form.</p>}
       <div className="card space-y-3 p-4">
         <p className="font-semibold">Your ratings</p>
@@ -179,6 +188,22 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
           ))}
         </div>
       </fieldset>
+      {!signedIn && (
+        <div className="card space-y-4 p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <p className="font-semibold">About you</p>
+            <a className="link text-sm" href={`/login?next=${encodeURIComponent(`/camps/${camp.slug}/review?resume=1`)}`}>Have an account? Sign in</a>
+          </div>
+          <div>
+            <label className="label" htmlFor="guestName">Your name (shown as e.g. &lsquo;Sarah M.&rsquo;)</label>
+            <input id="guestName" className="input" required maxLength={60} autoComplete="name" value={d.guestName} onChange={(e) => update({ guestName: e.target.value })} placeholder="Sarah Miller" />
+          </div>
+          <div>
+            <label className="label" htmlFor="guestEmail">Email (optional, never shown — lets us contact you about your review)</label>
+            <input id="guestEmail" type="email" className="input" maxLength={254} autoComplete="email" value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} placeholder="you@example.com" />
+          </div>
+        </div>
+      )}
       <div className="hidden" aria-hidden="true">
         <label>Website <input ref={honeypot} type="text" name="website" tabIndex={-1} autoComplete="off" /></label>
       </div>
@@ -190,9 +215,9 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
         <ul className="rounded-lg bg-red-50 p-3 text-sm text-red-800" role="alert">{errors.map((e) => <li key={e}>• {e}</li>)}</ul>
       )}
       <button type="submit" className="btn-primary w-full sm:w-auto" disabled={status === "sending"}>
-        {status === "sending" ? "Submitting…" : signedIn ? "Submit review" : "Continue — sign in to submit"}
+        {status === "sending" ? "Submitting…" : "Submit review"}
       </button>
-      {!signedIn && <p className="text-xs muted">We&apos;ll ask for your email so we can prevent fake reviews. Your draft stays saved on this device.</p>}
+      {!signedIn && <p className="text-xs muted">No account needed. Your draft stays saved on this device until you submit.</p>}
     </form>
   );
 }

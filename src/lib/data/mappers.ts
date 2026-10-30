@@ -1,4 +1,5 @@
 import { isParaphraseAttribution } from "../external-reviews/rights";
+import { shortDisplayName } from "../reviews/guest";
 import type { CampDetail, CampSummary, CommunityReview, PublicExternalReview, ResearchSummary } from "../types";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -77,6 +78,8 @@ export function mapReviewRow(r: any): CommunityReview {
     wouldRecommend: r.would_recommend ?? null,
     verified: r.verification === "verified",
     createdAt: r.created_at,
+    authorName: shortDisplayName(r.is_guest ? (r.guest_name ?? r.display_name) : r.display_name),
+    isGuest: Boolean(r.is_guest),
   };
 }
 

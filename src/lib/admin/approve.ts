@@ -1,7 +1,9 @@
 import "server-only";
-import type { Sql } from "../db";
+import type { Sql as BaseSql, TxSql } from "../db";
 import { slugify } from "../format";
 import type { NormalizedCandidate } from "../ingestion/types";
+
+type Sql = BaseSql | TxSql;
 
 async function upsertNamed(sql: Sql, table: "institutions" | "organizers", name: string | null, extra: Record<string, unknown> = {}) {
   if (!name) return null;
@@ -35,15 +37,18 @@ const FACT_FIELDS: [keyof NormalizedCandidate, string][] = [
 /**
  * Publishes (or updates) a camp from an approved queue item. Only factual camp
  * fields are written — this code path has no access to community reviews.
+ * adminId is null when a community submission is auto-published (no reviewer).
  */
-export async function approveQueueItem(sql: Sql, itemId: string, adminId: string, opts: {
+export async function approveQueueItem(sql: Sql, itemId: string, adminId: string | null, opts: {
   verifiedAgainstSource: boolean; overrides?: Partial<NormalizedCandidate>;
 }) {
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const [item] = await sql<any[]>`select * from discovery_queue where id = ${itemId}`;
   if (!item) throw new Error("Queue item not found");
   if (item.status !== "pending") throw new Error("Item already reviewed");
-  const c: NormalizedCandidate = { ...item.candidate, ...(opts.overrides ?? {}) };
+  // Older rows may hold the candidate double-encoded as a jsonb string scalar.
+  const stored = typeof item.candidate === "string" ? JSON.parse(item.candidate) : item.candidate;
+  const c: NormalizedCandidate = { ...stored, ...(opts.overrides ?? {}) };
   if (!c.name || !c.sport) throw new Error("Name and sport are required");
 
   const institutionId = await upsertNamed(sql, "institutions", c.institution, { state: c.state ?? undefined });
@@ -74,7 +79,7 @@ export async function approveQueueItem(sql: Sql, itemId: string, adminId: string
   for (const [field, value] of Object.entries(facts)) {
     await sql`
       insert into camp_field_provenance (camp_id, field, value, source_id, source_url, observed_at)
-      values (${campId}, ${field}, ${JSON.stringify(value)}::jsonb, ${item.source_id ?? null}, ${item.source_url ?? null}, ${item.created_at})`;
+      values (${campId}, ${field}, ${JSON.stringify(value)}::text::jsonb, ${item.source_id ?? null}, ${item.source_url ?? null}, ${item.created_at})`;
   }
   // Participating colleges from sources are stored UNVERIFIED until an admin confirms each.
   for (const name of c.participatingColleges ?? []) {
