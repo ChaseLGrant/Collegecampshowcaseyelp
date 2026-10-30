@@ -6,6 +6,8 @@ import { notFound } from "next/navigation";
 import { CompareButton } from "@/components/CompareButton";
 import { ProvenanceTag } from "@/components/ProvenanceTag";
 import { RatingBadge } from "@/components/RatingBadge";
+import { EditorialRatingBadge, EditorsPickBadge } from "@/components/EditorialRating";
+import { EDITORIAL_EXPLAINER, hasEditorialRating } from "@/lib/editorial";
 import { ReportReview } from "@/components/ReportReview";
 import { SampleBanner } from "@/components/SampleBanner";
 import { Stars } from "@/components/Stars";
@@ -21,6 +23,12 @@ import { campJsonLd, campPageTitle, jsonLdScript } from "@/lib/seo/jsonld";
 import { directoryPath, eventTypeLabel, sportLabel } from "@/lib/sports";
 
 type Params = { slug: string };
+
+const SENTIMENT_LABEL = { positive: "Mostly positive", mixed: "Mixed", negative: "Mostly negative", neutral: "Neutral" } as const;
+const SENTIMENT_CLASS = {
+  positive: "font-medium text-emerald-800", mixed: "font-medium text-amber-900",
+  negative: "font-medium text-red-700", neutral: "font-medium text-navy-500",
+} as const;
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const camp = await (await getVisitorRepository()).getCampBySlug((await params).slug);
@@ -66,6 +74,7 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
         <header className="mt-3 grid gap-6 lg:grid-cols-[1fr_320px]">
           <div>
             <div className="flex flex-wrap gap-1.5">
+              <EditorsPickBadge pick={camp.editorial.pick} />
               <span className="tag bg-brand-50 text-brand">{eventTypeLabel(camp.eventType)}</span>
               <span className="tag bg-navy-50 text-navy-700">{sportLabel(camp.sport)}</span>
               {camp.status === "cancelled" && <span className="tag bg-red-50 text-red-700">Cancelled</span>}
@@ -79,7 +88,10 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
               {camp.association && camp.classificationVerified ? ` · ${camp.association}${camp.division ? ` ${camp.division}` : ""}` : ""}
               {camp.organizerName && camp.organizerName !== camp.institutionName ? ` · Organized by ${camp.organizerName}` : ""}
             </p>
-            <div className="mt-3"><RatingBadge stats={camp.stats} size="md" /></div>
+            <div className="mt-3 space-y-1.5">
+              <EditorialRatingBadge editorial={camp.editorial} size="md" showExplainer />
+              <div><span className="sr-only">Parent reviews: </span><RatingBadge stats={camp.stats} size="md" reviewHref={`/camps/${camp.slug}/review`} /></div>
+            </div>
           </div>
           <div className="space-y-4">
           <div className="card p-4">
@@ -140,19 +152,43 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
           </section>
         )}
 
+        {/* CampGrade editorial rating — staff opinion, kept separate from parent reviews */}
+        {(hasEditorialRating(camp.editorial) || camp.editorial.pick || camp.editorial.rationale) && (
+          <section className="mt-10 max-w-3xl" aria-labelledby="editorial-h">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 id="editorial-h" className="h2">CampGrade Editor Rating</h2>
+              <EditorsPickBadge pick={camp.editorial.pick} />
+            </div>
+            <p className="text-sm muted">{EDITORIAL_EXPLAINER}</p>
+            <div className="card mt-4 p-5">
+              {hasEditorialRating(camp.editorial) && (
+                <p className="flex items-center gap-2">
+                  <Stars value={camp.editorial.score} size="md" label={`Editor rating ${camp.editorial.score.toFixed(1)} out of 5`} />
+                  <span className="text-lg font-semibold">{camp.editorial.score.toFixed(1)}</span>
+                  <span className="text-sm muted">/ 5</span>
+                </p>
+              )}
+              {camp.editorial.rationale && (
+                <p className="mt-3 whitespace-pre-line leading-relaxed">{camp.editorial.rationale}</p>
+              )}
+              <p className="mt-3 text-xs muted">Not included in the parent review average or review count.</p>
+            </div>
+          </section>
+        )}
+
         {/* 1. CampGrade Community Reviews */}
         <section id="reviews" className="mt-10" aria-labelledby="community-h">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 id="community-h" className="h2">CampGrade Community Reviews</h2>
-              <p className="text-sm muted">Authentic, first-hand reviews from parents and attendees.</p>
+              <p className="text-sm muted">Authentic, first-hand reviews from parents and attendees. Separate from the CampGrade Editor Rating.</p>
             </div>
             <Link href={`/camps/${camp.slug}/review`} className="btn-primary">Write a review</Link>
           </div>
           {s.reviewCount > 0 ? (
             <div className="mt-4 grid gap-6 lg:grid-cols-[280px_1fr]">
               <div className="card h-fit p-4">
-                <RatingBadge stats={s} size="md" />
+                <RatingBadge stats={s} size="md" reviewHref={`/camps/${camp.slug}/review`} />
                 <ul className="mt-3 space-y-2 text-sm">
                   {RATING_CATEGORIES.map((c) => (
                     <li key={c.key} className="flex items-center justify-between gap-2">
@@ -186,7 +222,7 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
             </div>
           ) : (
             <div className="card mt-4 p-6">
-              <p className="font-semibold">No community reviews yet.</p>
+              <p className="font-semibold">No parent reviews yet — <Link href={`/camps/${camp.slug}/review`} className="link">be the first</Link>.</p>
               <p className="mt-1 text-sm muted">Attended this event? Your review helps other families decide. It takes about two minutes.</p>
             </div>
           )}
@@ -204,15 +240,26 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
                     <span className="font-semibold">{e.platformName}</span>
                     <span className="tag bg-navy-50 text-navy-700">{provenanceLabel(e.provenanceType)}</span>
                   </div>
+                  {(e.reviewDate || e.sentiment) && (
+                    <p className="mt-1 text-xs muted">
+                      {e.reviewDate ? formatDate(e.reviewDate) : ""}
+                      {e.reviewDate && e.sentiment ? " · " : ""}
+                      {e.sentiment ? <span className={SENTIMENT_CLASS[e.sentiment]}>{SENTIMENT_LABEL[e.sentiment]}</span> : null}
+                    </p>
+                  )}
                   {e.rating != null && e.ratingScale && <p className="mt-1">Rated {e.rating} / {e.ratingScale} on {e.platformName}</p>}
-                  {e.excerpt && <blockquote className="mt-2 border-l-2 border-navy-100 pl-3 italic">&ldquo;{e.excerpt}&rdquo;</blockquote>}
+                  {e.excerpt && (e.paraphrased ? (
+                    <p className="mt-2 leading-relaxed"><span className="sr-only">Summary: </span>{e.excerpt}</p>
+                  ) : (
+                    <blockquote className="mt-2 border-l-2 border-navy-100 pl-3 italic">&ldquo;{e.excerpt}&rdquo;</blockquote>
+                  ))}
                   {e.reviewerDisplay && <p className="mt-1 text-xs muted">— {e.reviewerDisplay}</p>}
                   <p className="mt-2 text-xs muted">
-                    {e.attribution}{e.reviewDate ? ` · ${formatDate(e.reviewDate)}` : ""}
+                    {e.attribution}{e.paraphrased ? " (CampGrade's summary, not a quote)" : ""}
                     {e.referencedName !== camp.name ? ` · refers to “${e.referencedName}”` : ""}
                   </p>
                   <a href={safeHttpUrl(e.sourceUrl) ?? "#"} target="_blank" rel="noopener noreferrer nofollow" className="link mt-2 inline-block text-xs">
-                    {e.linkOnly ? "Read on the original site ↗" : "View source ↗"}
+                    Read on {e.platformName} ↗
                   </a>
                 </li>
               ))}

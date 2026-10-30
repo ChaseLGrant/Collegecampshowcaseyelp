@@ -1,3 +1,4 @@
+import { isParaphraseAttribution } from "../external-reviews/rights";
 import type { CampDetail, CampSummary, CommunityReview, PublicExternalReview, ResearchSummary } from "../types";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -36,6 +37,11 @@ export function mapDirectoryRow(r: any): CampSummary {
       avgInstruction: num(r.avg_instruction),
       avgExposure: num(r.avg_exposure),
       avgOrganization: num(r.avg_organization),
+    },
+    editorial: {
+      score: num(r.editorial_score),
+      pick: Boolean(r.editorial_pick),
+      rationale: r.editorial_rationale ?? null,
     },
   };
 }
@@ -88,6 +94,8 @@ export function mapExternalPublicRow(r: any): PublicExternalReview {
     reviewerDisplay: r.reviewer_display ?? null,
     attribution: r.attribution,
     linkOnly: r.rights_status === "link_only",
+    paraphrased: isParaphraseAttribution(r.attribution),
+    sentiment: ["positive", "mixed", "negative", "neutral"].includes(r.sentiment) ? r.sentiment : null,
     matchConfidence: Number(r.match_confidence ?? 0),
   };
 }

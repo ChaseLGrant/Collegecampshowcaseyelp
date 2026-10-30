@@ -20,6 +20,12 @@ export interface ExternalReviewRecord {
   rightsStatus: RightsStatus;
   matchConfidence: number;
   status: "pending" | "approved" | "rejected";
+  sentiment?: PublicExternalReview["sentiment"];
+}
+
+/** Our own summaries are stored with attribution "Paraphrased from <platform>"; they are not quotes. */
+export function isParaphraseAttribution(attribution: string | null | undefined): boolean {
+  return /^paraphrased\b/i.test(String(attribution ?? "").trim());
 }
 
 /** Minimum confidence that an external record refers to this camp before it can be shown. */
@@ -47,6 +53,8 @@ export function toPublicExternalReview(r: ExternalReviewRecord): PublicExternalR
     reviewerDisplay: full && r.reviewerDisplayPermitted ? r.reviewerDisplay : null,
     attribution: r.attribution,
     linkOnly: !full,
+    paraphrased: isParaphraseAttribution(r.attribution),
+    sentiment: r.sentiment ?? null,
     matchConfidence: r.matchConfidence,
   };
 }

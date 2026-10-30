@@ -63,5 +63,6 @@ export const SAMPLE_CAMPS: CampDetail[] = seeds.map((s, i) => ({
   participatingColleges: [],
   coaches: [],
   stats: emptyStats(),
+  editorial: { score: null, pick: false, rationale: null }, // no fabricated editorial ratings on sample data
   isSample: true,
 }));

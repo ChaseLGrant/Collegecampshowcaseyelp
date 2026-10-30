@@ -4,8 +4,8 @@ import { stateName } from "@/lib/states";
 import type { FilterOptions } from "@/lib/data/repository";
 
 const SORT_LABELS: Record<string, string> = {
-  relevance: "Best match", date: "Soonest", price_low: "Price: low to high", price_high: "Price: high to low",
-  rating: "Community rating", reviews: "Most reviewed",
+  recommended: "Recommended", editorial: "Top rated by CampGrade", relevance: "Best match", date: "Soonest", price_low: "Price: low to high", price_high: "Price: high to low",
+  rating: "Parent rating", reviews: "Most parent reviews",
 };
 
 /** GET form so filters are shareable URLs and work without JavaScript. */
@@ -13,7 +13,8 @@ export function Filters({ action, filters, options, hideSport = true }: {
   action: string; filters: SearchFilters; options: FilterOptions; hideSport?: boolean;
 }) {
   const active = [filters.state, filters.college, filters.association, filters.division, filters.eventType,
-    filters.minPrice, filters.maxPrice, filters.from, filters.to, filters.minRating, filters.minReviews].filter((v) => v != null).length;
+    filters.minPrice, filters.maxPrice, filters.from, filters.to, filters.minRating, filters.minReviews,
+    filters.editorsPick || undefined].filter((v) => v != null).length;
   return (
     <details className="card group p-4 lg:open:block" open={active > 0 ? true : undefined}>
       <summary className="flex cursor-pointer list-none items-center justify-between font-semibold">
@@ -88,7 +89,7 @@ export function Filters({ action, filters, options, hideSport = true }: {
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="label" htmlFor="f-rating">Min rating</label>
+            <label className="label" htmlFor="f-rating">Min parent rating</label>
             <select id="f-rating" name="minRating" defaultValue={filters.minRating ?? ""} className="input">
               <option value="">Any</option>
               {[4.5, 4, 3.5, 3].map((r) => <option key={r} value={r}>{r}+ stars</option>)}
@@ -102,6 +103,9 @@ export function Filters({ action, filters, options, hideSport = true }: {
             </select>
           </div>
         </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="editorsPick" value="1" defaultChecked={filters.editorsPick} /> Editor&apos;s Picks only
+        </label>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="includePast" value="1" defaultChecked={filters.includePast} /> Include past events
         </label>

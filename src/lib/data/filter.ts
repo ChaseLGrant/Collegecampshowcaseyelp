@@ -24,6 +24,7 @@ export function filterAndSortCamps(camps: CampSummary[], f: SearchFilters, now =
     if (f.to && (!c.startDate || c.startDate > f.to)) return false;
     if (f.minRating != null && (c.stats.reviewCount === 0 || (c.stats.avgOverall ?? 0) < f.minRating)) return false;
     if (f.minReviews != null && c.stats.reviewCount < f.minReviews) return false;
+    if (f.editorsPick && !c.editorial?.pick) return false;
     if (terms.length) {
       const hay = [c.name, c.institutionName, c.organizerName, c.city, c.state, c.sport, c.eventType]
         .filter(Boolean).join(" ").toLowerCase();
@@ -34,8 +35,15 @@ export function filterAndSortCamps(camps: CampSummary[], f: SearchFilters, now =
 
   const byDate = (a: CampSummary, b: CampSummary) =>
     (a.startDate ?? "9999").localeCompare(b.startDate ?? "9999");
+  const edScore = (c: CampSummary) => c.editorial?.score ?? -Infinity;
+  const edPick = (c: CampSummary) => (c.editorial?.pick ? 1 : 0);
   const sorters: Record<string, (a: CampSummary, b: CampSummary) => number> = {
     date: byDate,
+    // Default: Editor's Picks first, then editor score (unscored last), then community ranking, then date.
+    recommended: (a, b) => edPick(b) - edPick(a) || compareDesc(edScore(a), edScore(b)) ||
+      rankingScore(b.stats) - rankingScore(a.stats) || byDate(a, b),
+    editorial: (a, b) => compareDesc(edScore(a), edScore(b)) || edPick(b) - edPick(a) ||
+      rankingScore(b.stats) - rankingScore(a.stats) || byDate(a, b),
     relevance: (a, b) => relevance(b, terms) - relevance(a, terms) || byDate(a, b),
     price_low: (a, b) => (a.priceCents ?? Infinity) - (b.priceCents ?? Infinity) || byDate(a, b),
     price_high: (a, b) => (b.priceCents ?? -1) - (a.priceCents ?? -1) || byDate(a, b),
@@ -46,6 +54,10 @@ export function filterAndSortCamps(camps: CampSummary[], f: SearchFilters, now =
   const total = out.length;
   const start = (f.page - 1) * f.pageSize;
   return { items: out.slice(start, start + f.pageSize), total };
+}
+
+function compareDesc(a: number, b: number): number {
+  return a === b ? 0 : a > b ? -1 : 1;
 }
 
 function relevance(c: CampSummary, terms: string[]): number {

@@ -3,11 +3,13 @@ import { formatDateRange, formatPrice, locationLabel } from "@/lib/format";
 import { eventTypeLabel, sportLabel } from "@/lib/sports";
 import type { CampSummary } from "@/lib/types";
 import { RatingBadge } from "./RatingBadge";
+import { EditorialRatingBadge, EditorsPickBadge } from "./EditorialRating";
 
 export function CampCard({ camp, showSport = false }: { camp: CampSummary; showSport?: boolean }) {
   return (
     <article className="card flex flex-col gap-2 p-4 transition hover:border-brand/40">
       <div className="flex flex-wrap items-center gap-1.5">
+        <EditorsPickBadge pick={camp.editorial.pick} />
         <span className="tag bg-brand-50 text-brand">{eventTypeLabel(camp.eventType)}</span>
         {showSport && <span className="tag bg-navy-50 text-navy-700">{sportLabel(camp.sport)}</span>}
         {camp.status === "cancelled" && <span className="tag bg-red-50 text-red-700">Cancelled</span>}
@@ -36,8 +38,12 @@ export function CampCard({ camp, showSport = false }: { camp: CampSummary; showS
           <dd className="text-navy-500">{formatDateRange(camp.startDate, camp.endDate)}</dd>
         </div>
       </dl>
-      <div className="mt-auto border-t border-navy-50 pt-2">
-        <RatingBadge stats={camp.stats} />
+      <div className="mt-auto space-y-1 border-t border-navy-50 pt-2">
+        <EditorialRatingBadge editorial={camp.editorial} />
+        <div>
+          <span className="sr-only">Parent reviews: </span>
+          <RatingBadge stats={camp.stats} reviewHref={`/camps/${camp.slug}/review`} />
+        </div>
       </div>
     </article>
   );

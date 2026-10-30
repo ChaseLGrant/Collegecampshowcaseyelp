@@ -11,7 +11,7 @@ describe("parseSearchFilters", () => {
     expect(f.maxPrice).toBeUndefined();
     expect(f.page).toBe(1);
     expect(f.state).toBe("TX");
-    expect(f.sort).toBe("date");
+    expect(f.sort).toBe("recommended");
   });
   it("applies the remembered sport only when the URL doesn't mention sport", () => {
     expect(parseSearchFilters({}, "baseball").sport).toBe("baseball");

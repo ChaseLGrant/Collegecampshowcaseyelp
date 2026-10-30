@@ -7,16 +7,19 @@ import { LeadCaptureForm } from "@/components/LeadCaptureForm";
 import { getPublicRepository } from "@/lib/data";
 import { databaseConfigured } from "@/lib/env";
 import { parseSearchFilters } from "@/lib/search";
+import { EDITORIAL_EXPLAINER } from "@/lib/editorial";
 import { getStickySport } from "@/lib/server/sticky-sport";
 import { DIRECTORY_SPORTS, SPORTS, directoryPath, sportLabel } from "@/lib/sports";
 
 export default async function HomePage() {
   const sport = await getStickySport();
   const repo = await getPublicRepository();
-  const [upcoming, counts] = await Promise.all([
+  const [picks, upcoming, counts] = await Promise.all([
+    repo.searchCamps(parseSearchFilters({ sort: "editorial", editorsPick: "1", pageSize: "6" }, sport)),
     repo.searchCamps(parseSearchFilters({ sort: "date", pageSize: "6" }, sport)),
     repo.countBySport(),
   ]);
+  const picksHref = `/search?${new URLSearchParams({ sport: sport ?? "all", editorsPick: "1", sort: "editorial" })}`;
   const hrefs: Record<string, string> = { all: "/search?sport=all" };
   SPORTS.forEach((s) => (hrefs[s.id] = s.id === "other" ? "/search?sport=other" : directoryPath(s.id)));
 
@@ -37,6 +40,21 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {picks.items.length > 0 && (
+        <section className="container-page pt-10" aria-labelledby="picks-h">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <h2 id="picks-h" className="h2">{sport ? `Editor's Picks: ${sportLabel(sport).toLowerCase()}` : "Editor's Picks"}</h2>
+              <p className="text-sm muted">{EDITORIAL_EXPLAINER}</p>
+            </div>
+            <Link href={picksHref} className="link shrink-0 text-sm">See all picks</Link>
+          </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {picks.items.map((c) => <CampCard key={c.id} camp={c} showSport={!sport} />)}
+          </div>
+        </section>
+      )}
 
       <section className="container-page py-10">
         <div className="flex items-end justify-between gap-4">

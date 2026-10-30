@@ -1,6 +1,7 @@
 import "server-only";
 import type { Sql } from "../db";
 import { todayISO } from "../search";
+import { MIN_DISPLAY_CONFIDENCE } from "../external-reviews/rights";
 import type { CampRepository } from "./repository";
 import { mapDetailRow, mapDirectoryRow, mapExternalPublicRow, mapResearchRow, mapReviewRow } from "./mappers";
 
@@ -9,6 +10,7 @@ const DIRECTORY_COLUMNS = [
   "registration_url", "description", "eligibility", "positions", "status", "verification_status", "last_verified_at", "source_url",
   "institution_name", "institution_slug", "association", "division", "classification_verified", "organizer_name",
   "review_count", "avg_overall", "avg_value", "avg_instruction", "avg_exposure", "avg_organization", "verified_review_count",
+  "editorial_score", "editorial_pick", "editorial_rationale",
 ];
 
 const TIERS_VISIBLE: Record<"free" | "insider" | "elite", string[]> = {
@@ -50,15 +52,19 @@ export function makePgRepository(sql: Sql): CampRepository {
       if (f.to) conds.push(sql`start_date <= ${f.to}::date`);
       if (f.minRating != null) conds.push(sql`avg_overall >= ${f.minRating} and review_count > 0`);
       if (f.minReviews != null) conds.push(sql`review_count >= ${f.minReviews}`);
+      if (f.editorsPick) conds.push(sql`editorial_pick`);
       if (f.q) conds.push(sql`search @@ websearch_to_tsquery('english', ${f.q})`);
       const where = conds.reduce((a, c) => sql`${a} and ${c}`);
 
       // Same Bayesian score as src/lib/ratings.ts — unreviewed camps sort last, few-review camps can't dominate.
+      // Editorial fields only affect ORDER; they never touch parent-review averages or counts.
       const primary =
         f.sort === "price_low" ? sql`price_cents asc nulls last,` :
         f.sort === "price_high" ? sql`price_cents desc nulls last,` :
         f.sort === "rating" ? sql`ranking_score desc,` :
-        f.sort === "reviews" ? sql`review_count desc,` : sql``;
+        f.sort === "reviews" ? sql`review_count desc,` :
+        f.sort === "recommended" ? sql`editorial_pick desc, editorial_score desc nulls last, ranking_score desc,` :
+        f.sort === "editorial" ? sql`editorial_score desc nulls last, editorial_pick desc, ranking_score desc,` : sql``;
       const offset = (f.page - 1) * f.pageSize;
       const [rows, [{ total }]] = await Promise.all([
         sql`select ${cols} from camp_directory where ${where} order by ${primary} start_date asc nulls last, id limit ${f.pageSize} offset ${offset}`,
@@ -91,7 +97,15 @@ export function makePgRepository(sql: Sql): CampRepository {
     },
 
     async listExternalReviews(campId) {
-      const rows = await sql`select * from external_reviews_public where camp_id = ${campId} order by review_date desc nulls last limit 50`;
+      // Camp-specific rows plus organizer-level rows (e.g. feedback about the showcase company as a whole).
+      const rows = await sql`
+        select * from external_reviews_public
+        where match_confidence >= ${MIN_DISPLAY_CONFIDENCE}
+          and (camp_id = ${campId}
+               or (camp_id is null
+                   and organizer_id = (select organizer_id from camps where id = ${campId})
+                   and (sport is null or sport = (select sport from camps where id = ${campId}))))
+        order by (camp_id is null), review_date desc nulls last limit 50`;
       return rows.map(mapExternalPublicRow);
     },
 

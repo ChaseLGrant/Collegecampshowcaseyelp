@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ASSOCIATIONS, EVENT_TYPE_IDS, SPORT_IDS, type SportId } from "./sports";
 import { normalizeState } from "./states";
 
-export const SORTS = ["relevance", "date", "price_low", "price_high", "rating", "reviews"] as const;
+export const SORTS = ["recommended", "relevance", "editorial", "date", "price_low", "price_high", "rating", "reviews"] as const;
 export type SortOption = (typeof SORTS)[number];
 
 export interface SearchFilters {
@@ -20,6 +20,8 @@ export interface SearchFilters {
   minRating?: number;
   minReviews?: number;
   includePast?: boolean;
+  /** Only CampGrade Editor's Picks. */
+  editorsPick?: boolean;
   sort: SortOption;
   page: number;
   pageSize: number;
@@ -44,7 +46,8 @@ const schema = z.object({
   minRating: optNum(1, 5).catch(undefined),
   minReviews: optNum(1, 10000).catch(undefined),
   includePast: z.preprocess((v) => v === "1" || v === "true", z.boolean()).optional(),
-  sort: z.enum(SORTS).catch("relevance").default("relevance"),
+  editorsPick: z.preprocess((v) => v === "1" || v === "true", z.boolean()).optional(),
+  sort: z.enum(SORTS).optional().catch(undefined),
   page: z.preprocess((v) => (v == null || v === "" ? 1 : Number(v)), z.number().int().min(1).max(500)).catch(1),
   pageSize: z.preprocess((v) => (v == null || v === "" ? 24 : Number(v)), z.number().int().min(1).max(60)).catch(24),
 });
@@ -68,12 +71,15 @@ export function parseSearchFilters(params: ParamsLike, stickySport?: string | nu
   const rec = toRecord(params);
   if (rec.sport === undefined && stickySport && stickySport !== "all") rec.sport = stickySport;
   if (rec.sport === "all") delete rec.sport;
-  const parsed = schema.parse(rec) as SearchFilters;
+  const parsed = schema.parse(rec) as Omit<SearchFilters, "sort"> & { sort?: SortOption };
+  // No sort chosen: keyword searches rank by relevance; browsing uses the default
+  // "recommended" order (Editor's Picks, then editor score, then community ranking, then date).
+  if (!parsed.sort) parsed.sort = parsed.q ? "relevance" : "recommended";
   if (parsed.minPrice != null && parsed.maxPrice != null && parsed.minPrice > parsed.maxPrice) {
     [parsed.minPrice, parsed.maxPrice] = [parsed.maxPrice, parsed.minPrice];
   }
-  if (!parsed.q && parsed.sort === "relevance") parsed.sort = "date";
-  return parsed;
+  if (!parsed.q && parsed.sort === "relevance") parsed.sort = "recommended";
+  return parsed as SearchFilters;
 }
 
 /** Serializes filters back to a query string (omits defaults). */
@@ -84,7 +90,7 @@ export function filtersToQuery(f: Partial<SearchFilters>, overrides: Partial<Sea
     if (v === undefined || v === null || v === "" || v === false) continue;
     if (k === "page" && v === 1) continue;
     if (k === "pageSize" && v === 24) continue;
-    if (k === "sort" && (v === "relevance" || v === "date")) continue;
+    if (k === "sort" && v === (merged.q ? "relevance" : "recommended")) continue;
     qs.set(k, v === true ? "1" : String(v));
   }
   return qs.toString();

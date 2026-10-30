@@ -12,6 +12,13 @@ export interface RatingStats {
   avgOrganization: number | null;
 }
 
+/** CampGrade editorial (staff) rating — independent of community/parent reviews. */
+export interface EditorialRating {
+  score: number | null; // 1.0–5.0, one decimal
+  pick: boolean;
+  rationale: string | null;
+}
+
 export interface CampSummary {
   id: string;
   slug: string;
@@ -37,6 +44,8 @@ export interface CampSummary {
   lastVerifiedAt: string | null;
   sourceUrl: string | null;
   stats: RatingStats;
+  /** CampGrade's own staff rating. Kept separate from parent reviews; never blended into `stats`. */
+  editorial: EditorialRating;
   /** True only for clearly-labeled sample data used when no database is configured. */
   isSample?: boolean;
 }
@@ -84,6 +93,9 @@ export interface PublicExternalReview {
   reviewerDisplay: string | null;
   attribution: string;
   linkOnly: boolean;
+  /** True when the excerpt is CampGrade's own paraphrase (attribution "Paraphrased from …"), not a quote. */
+  paraphrased: boolean;
+  sentiment: "positive" | "mixed" | "negative" | "neutral" | null;
   matchConfidence: number;
 }
 
