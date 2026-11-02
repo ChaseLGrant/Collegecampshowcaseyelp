@@ -1024,5 +1024,75 @@
       "College Volleyball Prospect ID"
     ],
     "source": "https://www.collegevolleyballprospectid.com/"
+  },
+  {
+    "name": "Wake Forest University",
+    "logo": "/logos/wake-forest-university.png",
+    "aliases": [
+      "Wake Forest"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/154.png"
+  },
+  {
+    "name": "University of California, Berkeley",
+    "logo": "/logos/university-of-california-berkeley.png",
+    "aliases": [
+      "Cal",
+      "UC Berkeley"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/25.png"
+  },
+  {
+    "name": "University of Michigan",
+    "logo": "/logos/university-of-michigan.png",
+    "aliases": [
+      "Michigan"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/130.png"
+  },
+  {
+    "name": "San Jose State University",
+    "logo": "/logos/san-jose-state-university.png",
+    "aliases": [
+      "SJSU"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/23.png"
+  },
+  {
+    "name": "University of Virginia",
+    "logo": "/logos/university-of-virginia.png",
+    "aliases": [
+      "Virginia",
+      "UVA"
+    ],
+    "source": "https://a.espncdn.com/i/teamlogos/ncaa/500/258.png"
+  },
+  {
+    "name": "CA Showcase (Terry Donahue Memorial)",
+    "logo": "/logos/ca-showcase-terry-donahue-memorial.png",
+    "aliases": [
+      "California Showcase"
+    ],
+    "source": "https://images.squarespace-cdn.com/content/v1/62b0bc1197737d7ab8af7e0f/72422ab6-a65f-4a1b-9b59-35f7c194b1ef/California+Showcase+Revision+%28Source+File%29.png?format=1500w"
+  },
+  {
+    "name": "College Soccer ID",
+    "logo": "/logos/college-soccer-id.png",
+    "aliases": [],
+    "source": "https://static.showit.co/200/28pThxw9Qmi0_6GveYmw-g/226788/csid_logo.png"
+  },
+  {
+    "name": "Legends FC",
+    "logo": "/logos/legends-fc.png",
+    "aliases": [],
+    "bg": "#111827",
+    "source": "https://images.squarespace-cdn.com/content/v1/58b7589dc534a58cea04125e/1abf8677-c678-43f7-a4e5-427fb5d20cd1/legendsfc_full_logo_wht_web.png"
+  },
+  {
+    "name": "KT Recruiting",
+    "logo": "/logos/kt-recruiting.png",
+    "aliases": [],
+    "source": "https://www.kt-recruiting.com/_next/image?url=%2Fassets%2Fkt-logo.png&w=1200&q=75",
+    "bg": "#111827"
   }
 ]
