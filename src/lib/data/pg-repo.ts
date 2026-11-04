@@ -91,11 +91,9 @@ export function makePgRepository(sql: Sql): CampRepository {
     async listReviews(campId) {
       const rows = await sql`
         select r.id, r.camp_id, r.attendee_role, r.attended_year, r.rating_value, r.rating_instruction, r.rating_exposure,
-               r.rating_organization, r.rating_overall, r.title, r.body, r.would_recommend, r.verification, r.created_at,
-               r.guest_name, p.display_name, coalesce(u.is_guest, false) as is_guest
+               r.rating_organization, r.rating_overall, r.title, r.body, r.would_recommend, r.verification, r.created_at
         from reviews r
-        left join users u on u.id = r.user_id
-        left join profiles p on p.id = r.user_id
+        -- Anonymous reviews: never read reviewer identity (name, email, profile) for public pages.
         where r.camp_id = ${campId} and r.status = 'published' order by r.created_at desc limit 100`;
       return rows.map(mapReviewRow);
     },
@@ -143,6 +141,11 @@ export function makePgRepository(sql: Sql): CampRepository {
       const out: Record<string, number> = {};
       rows.forEach((r) => (out[r.sport] = r.n));
       return out;
+    },
+
+    async listPublicCamps(limit) {
+      const rows = await sql`select ${cols} from camp_directory where status in ('published', 'cancelled') order by start_date asc nulls last, id limit ${limit}`;
+      return rows.map(mapDirectoryRow);
     },
 
     async listPublishedSlugs(limit) {

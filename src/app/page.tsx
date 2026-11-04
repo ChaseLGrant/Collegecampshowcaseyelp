@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { CampCard } from "@/components/CampCard";
 import { SampleBanner } from "@/components/SampleBanner";
@@ -10,15 +11,27 @@ import { parseSearchFilters } from "@/lib/search";
 import { EDITORIAL_EXPLAINER } from "@/lib/editorial";
 import { getStickySport } from "@/lib/server/sticky-sport";
 import { DIRECTORY_SPORTS, SPORTS, directoryPath, sportLabel } from "@/lib/sports";
+import { getHubIndex } from "@/lib/seo/hub-data";
+import { cityHubs, collegeHubs, stateHubs } from "@/lib/seo/hubs";
+import { pageMetadata } from "@/lib/seo/meta";
+
+export const metadata: Metadata = pageMetadata({
+  title: "Camp Check: College Prospect Camps, ID Camps & Showcases",
+  description: "Compare college recruiting camps, prospect camps, ID camps and showcases in baseball, softball, football, basketball, soccer, volleyball and lacrosse: dates, costs and host programs.",
+  path: "/",
+});
 
 export default async function HomePage() {
   const sport = await getStickySport();
   const repo = await getPublicRepository();
-  const [picks, upcoming, counts] = await Promise.all([
+  const [picks, upcoming, counts, hubs] = await Promise.all([
     repo.searchCamps(parseSearchFilters({ sort: "editorial", editorsPick: "1", pageSize: "6" }, sport)),
     repo.searchCamps(parseSearchFilters({ sort: "date", pageSize: "6" }, sport)),
     repo.countBySport(),
+    getHubIndex(),
   ]);
+  const popular = [...stateHubs(hubs), ...cityHubs(hubs)].sort((a, b) => b.count - a.count).slice(0, 18);
+  const colleges = collegeHubs(hubs, { indexableOnly: true }).slice(0, 12);
   const picksHref = `/search?${new URLSearchParams({ sport: sport ?? "all", editorsPick: "1", sort: "editorial" })}`;
   const hrefs: Record<string, string> = { all: "/search?sport=all" };
   SPORTS.forEach((s) => (hrefs[s.id] = s.id === "other" ? "/search?sport=other" : directoryPath(s.id)));
@@ -89,6 +102,26 @@ export default async function HomePage() {
           ))}
         </ul>
       </section>
+
+      {(popular.length > 0 || colleges.length > 0) && (
+        <section className="container-page py-6" aria-labelledby="popular-h">
+          <h2 id="popular-h" className="h2">Popular camp searches</h2>
+          {popular.length > 0 && (
+            <ul className="mt-4 flex flex-wrap gap-2 text-sm">
+              {popular.map((h) => <li key={h.path}><Link href={h.path} className="chip-off py-1">{h.label}</Link></li>)}
+            </ul>
+          )}
+          {colleges.length > 0 && (
+            <>
+              <h3 className="mt-6 font-semibold">Camps by college</h3>
+              <ul className="mt-2 flex flex-wrap gap-2 text-sm">
+                {colleges.map((c) => <li key={c.path}><Link href={c.path} className="chip-off py-1">{c.name} camps</Link></li>)}
+                <li><Link href="/colleges" className="link py-1">All colleges →</Link></li>
+              </ul>
+            </>
+          )}
+        </section>
+      )}
 
       <section className="container-page py-10">
         <h2 className="h2">Three kinds of information, never mixed</h2>

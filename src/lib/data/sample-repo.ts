@@ -39,6 +39,9 @@ function makeMemoryRepo(camps: typeof SAMPLE_CAMPS, mode: "sample" | "empty"): C
       camps.forEach((c) => (out[c.sport] = (out[c.sport] ?? 0) + 1));
       return out;
     },
+    async listPublicCamps(limit) {
+      return camps.slice(0, limit);
+    },
     async listPublishedSlugs() {
       return []; // sample pages are never put in the sitemap
     },

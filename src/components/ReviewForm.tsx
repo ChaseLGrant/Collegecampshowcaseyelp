@@ -5,17 +5,16 @@ import { TURNSTILE_SITE_KEY, TurnstileWidget } from "@/components/TurnstileWidge
 
 type Draft = {
   ratings: Partial<Record<RatingKey, number>>;
-  attendeeRole: "" | "parent" | "athlete" | "coach" | "other";
+  attendeeRole: "" | "parent" | "athlete" | "coach";
   attendedYear: string;
   title: string;
   body: string;
   wouldRecommend: "" | "yes" | "no";
   confirmAdult: boolean;
   confirmFirsthand: boolean;
-  guestName: string;
 };
 
-const EMPTY: Draft = { ratings: {}, attendeeRole: "", attendedYear: "", title: "", body: "", wouldRecommend: "", confirmAdult: false, confirmFirsthand: false, guestName: "" };
+const EMPTY: Draft = { ratings: {}, attendeeRole: "", attendedYear: "", title: "", body: "", wouldRecommend: "", confirmAdult: false, confirmFirsthand: false };
 
 function StarInput({ name, label, value, onChange }: { name: string; label: string; value?: number; onChange: (v: number) => void }) {
   return (
@@ -75,7 +74,6 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
     if (!d.attendeeRole) e.push("Tell us who attended.");
     if (d.title.trim().length < 4) e.push("Add a short headline.");
     if (d.body.trim().length < 40) e.push("Write at least 40 characters about your experience.");
-    if (!signedIn && d.guestName.trim().length < 2) e.push("Add your name (shown as first name and last initial).");
     if (!signedIn && guestEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())) e.push("Enter a valid email or leave it blank.");
     if (!d.confirmAdult) e.push("Reviewers must be 18 or older.");
     if (!d.confirmFirsthand) e.push("Confirm this is your own first-hand experience.");
@@ -104,7 +102,7 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
         confirmFirsthand: d.confirmFirsthand,
         website: honeypot.current?.value ?? "",
         elapsedMs: Date.now() - started.current,
-        ...(signedIn ? {} : { guestName: d.guestName.trim(), guestEmail: guestEmail.trim() || undefined }),
+        ...(signedIn ? {} : { guestEmail: guestEmail.trim() || undefined }),
         ...(needsTurnstile ? { turnstileToken } : {}),
       }),
     });
@@ -151,6 +149,10 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
 
   return (
     <form onSubmit={submit} className="space-y-6" noValidate>
+      <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-900">
+        Your review is anonymous. Coaches and programs never see your name.
+        <span className="block font-normal">It shows only your role (Parent, Athlete or Coach) and, if you add it, the year you attended.</span>
+      </p>
       {restored && <p className="rounded-lg bg-brand-50 p-3 text-sm text-brand">We restored the draft you started on this device. Check it over and submit.</p>}
       {!enabled && <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Reviews open once the database is connected. You can still try the form.</p>}
       <div className="card space-y-3 p-4">
@@ -161,17 +163,16 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="label" htmlFor="role">I am the…</label>
+          <label className="label" htmlFor="role">I am the… (shown on your review)</label>
           <select id="role" className="input" value={d.attendeeRole} onChange={(e) => update({ attendeeRole: e.target.value as Draft["attendeeRole"] })}>
             <option value="">Choose one</option>
             <option value="parent">Parent / guardian</option>
             <option value="athlete">Athlete (18+)</option>
             <option value="coach">Coach</option>
-            <option value="other">Other attendee</option>
           </select>
         </div>
         <div>
-          <label className="label" htmlFor="year">Year attended (optional)</label>
+          <label className="label" htmlFor="year">Year attended (optional, shown as &ldquo;Attended 2026&rdquo;)</label>
           <input id="year" className="input" inputMode="numeric" maxLength={4} value={d.attendedYear} onChange={(e) => update({ attendedYear: e.target.value.replace(/\D/g, "") })} placeholder="e.g. 2026" />
         </div>
       </div>
@@ -183,7 +184,7 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
         <label className="label" htmlFor="body">Your experience</label>
         <textarea id="body" className="input min-h-[160px]" maxLength={5000} value={d.body} onChange={(e) => update({ body: e.target.value })}
           placeholder="Was it worth the cost? Which coaches were there? How organized was it? What should other families know?" />
-        <p className="mt-1 text-xs muted">{d.body.trim().length}/40 characters minimum. Please don&apos;t include links, names of minors or contact details.</p>
+        <p className="mt-1 text-xs muted">{d.body.trim().length}/40 characters minimum. Please don&apos;t include links, contact details, or names (yours or a minor&apos;s) if you want to stay anonymous.</p>
       </div>
       <fieldset>
         <legend className="label">Would you recommend it?</legend>
@@ -198,15 +199,11 @@ export function ReviewForm({ camp, signedIn, enabled }: { camp: { id: string; sl
       {!signedIn && (
         <div className="card space-y-4 p-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <p className="font-semibold">About you</p>
+            <p className="font-semibold">Stay in touch (optional, private)</p>
             <a className="link text-sm" href={`/login?next=${encodeURIComponent(`/camps/${camp.slug}/review?resume=1`)}`}>Have an account? Sign in</a>
           </div>
           <div>
-            <label className="label" htmlFor="guestName">Your name (shown as e.g. &lsquo;Sarah M.&rsquo;)</label>
-            <input id="guestName" className="input" required maxLength={60} autoComplete="name" value={d.guestName} onChange={(e) => update({ guestName: e.target.value })} placeholder="Sarah Miller" />
-          </div>
-          <div>
-            <label className="label" htmlFor="guestEmail">Email (optional, never shown — lets us contact you about your review)</label>
+            <label className="label" htmlFor="guestEmail">Email (optional, never shown publicly — only Camp Check moderators can see it)</label>
             <input id="guestEmail" type="email" className="input" maxLength={254} autoComplete="email" value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} placeholder="you@example.com" />
           </div>
         </div>

@@ -1,10 +1,21 @@
 import Link from "next/link";
 import { DIRECTORY_SPORTS, directoryPath, sportLabel } from "@/lib/sports";
+import { getHubIndex } from "@/lib/seo/hub-data";
+import { stateHubs, type HubLink } from "@/lib/seo/hubs";
 
-export function Footer() {
+async function popularHubs(): Promise<HubLink[]> {
+  try {
+    return stateHubs(await getHubIndex()).slice(0, 8);
+  } catch {
+    return [];
+  }
+}
+
+export async function Footer() {
+  const hubs = await popularHubs();
   return (
     <footer className="mt-16 border-t border-navy-100 bg-navy-50">
-      <div className="container-page grid gap-8 py-10 text-sm sm:grid-cols-3">
+      <div className="container-page grid gap-8 py-10 text-sm sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <a href="https://theathletemarket.com" target="_blank" rel="noopener" className="flex items-center gap-2.5" aria-label="Camp Check by The Athlete Market (opens theathletemarket.com)">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -19,6 +30,13 @@ export function Footer() {
             {DIRECTORY_SPORTS.map((s) => (
               <li key={s}><Link className="hover:text-brand" href={directoryPath(s)}>{sportLabel(s)} camps</Link></li>
             ))}
+          </ul>
+        </div>
+        <div>
+          <p className="font-semibold">Popular searches</p>
+          <ul className="mt-2 space-y-1">
+            {hubs.map((h) => <li key={h.path}><Link className="hover:text-brand" href={h.path}>{h.label}</Link></li>)}
+            <li><Link className="hover:text-brand" href="/colleges">Camps by college</Link></li>
           </ul>
         </div>
         <div>

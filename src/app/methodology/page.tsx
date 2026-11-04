@@ -5,6 +5,7 @@ import { STALE_AFTER_DAYS } from "@/lib/ingestion/staleness";
 export const metadata: Metadata = {
   title: "How Camp Check ratings and research work",
   description: "How Camp Check collects camp listings, moderates community reviews, attributes external sources, and labels AI-assisted research.",
+  alternates: { canonical: "/methodology" },
 };
 
 export default function MethodologyPage() {

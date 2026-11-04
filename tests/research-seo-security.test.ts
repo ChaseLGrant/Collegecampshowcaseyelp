@@ -37,10 +37,17 @@ describe("structured data", () => {
   it("never emits structured data for sample listings", () => {
     expect(campJsonLd(SAMPLE_CAMPS[0])).toBeNull();
   });
-  it("omits aggregateRating until there are enough native reviews", () => {
+  it("never emits aggregateRating, even with reviews", () => {
     expect(campJsonLd(real())!.aggregateRating).toBeUndefined();
     const ld = campJsonLd(real({ stats: { reviewCount: 4, verifiedCount: 1, avgOverall: 4.25, avgValue: 4, avgInstruction: 4, avgExposure: 4, avgOrganization: 4 } }))!;
-    expect(ld.aggregateRating).toMatchObject({ ratingValue: "4.3", reviewCount: 4 });
+    expect(ld.aggregateRating).toBeUndefined();
+  });
+  it("only includes offers when a price is listed", () => {
+    expect(campJsonLd(real({ priceCents: null }))!.offers).toBeUndefined();
+    expect(campJsonLd(real({ priceCents: 15000 }))!.offers).toMatchObject({ price: "150.00", priceCurrency: "USD" });
+  });
+  it("never emits an event without a real start date", () => {
+    expect(campJsonLd(real({ startDate: null }))).toBeNull();
   });
   it("escapes </script> in JSON-LD", () => {
     expect(jsonLdScript({ a: "</script><script>" })).not.toContain("</script>");

@@ -27,4 +27,6 @@ export interface CampRepository {
   getFilterOptions(sport?: SportId): Promise<FilterOptions>;
   countBySport(): Promise<Record<string, number>>;
   listPublishedSlugs(limit: number): Promise<{ slug: string; updatedAt: string | null }[]>;
+  /** Every public (published or cancelled) listing, for SEO hubs, intros and related-camp links. */
+  listPublicCamps(limit: number): Promise<CampSummary[]>;
 }
