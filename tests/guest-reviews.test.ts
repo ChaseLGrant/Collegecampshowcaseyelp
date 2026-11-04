@@ -67,16 +67,12 @@ describe("review author display", () => {
     rating_organization: 4, rating_overall: 4, title: "Solid camp", body: "x".repeat(50), would_recommend: true, verification: "unverified",
     created_at: "2026-10-01T00:00:00.000Z",
   };
-  it("labels guests and shows their short name", () => {
-    const r = mapReviewRow({ ...base, is_guest: true, guest_name: "Sarah Miller", display_name: "Sarah M." });
-    expect(r.isGuest).toBe(true);
-    expect(r.authorName).toBe("Sarah M.");
-  });
-  it("labels members and uses their profile display name only", () => {
-    const r = mapReviewRow({ ...base, is_guest: false, guest_name: null, display_name: "Coach Dave Ruiz" });
-    expect(r.isGuest).toBe(false);
-    expect(r.authorName).toBe("Coach R.");
-    expect(mapReviewRow({ ...base, is_guest: false, display_name: null }).authorName).toBeNull();
+  it("hides stored guest and member names (anonymous reviews)", () => {
+    const g = mapReviewRow({ ...base, is_guest: true, guest_name: "Sarah Miller", display_name: "Sarah M." });
+    const m = mapReviewRow({ ...base, is_guest: false, guest_name: null, display_name: "Coach Dave Ruiz" });
+    expect(JSON.stringify(g)).not.toContain("Sarah");
+    expect(JSON.stringify(m)).not.toContain("Ruiz");
+    expect(g.attendeeRole).toBe("parent");
   });
 });
 
@@ -94,5 +90,26 @@ describe("camp submissions", () => {
     expect(items).toHaveLength(1);
     expect(items[0].kind).toBe("camp_update");
     expect(items[0].matchedCampId).toBe("camp-1");
+  });
+});
+
+describe("anonymous reviews", () => {
+  it("never exposes stored reviewer identity in the public review shape", async () => {
+    const r = mapReviewRow({
+      id: "r1", camp_id: "c1", attendee_role: "parent", attended_year: 2025, rating_value: 4, rating_instruction: 4, rating_exposure: 4,
+      rating_organization: 4, rating_overall: 4, title: "Good", body: "x".repeat(50), would_recommend: true, verification: "none",
+      created_at: "2026-01-01", guest_name: "Sarah Miller", guest_email: "s@example.com", display_name: "Sarah M.", is_guest: true,
+    });
+    const s = JSON.stringify(r);
+    expect(s).not.toContain("Sarah");
+    expect(s).not.toContain("example.com");
+    expect(r).not.toHaveProperty("authorName");
+    expect(r).not.toHaveProperty("isGuest");
+  });
+  it("labels reviewers by role only", async () => {
+    const { reviewerRoleLabel } = await import("@/lib/reviews/anonymous");
+    expect(reviewerRoleLabel("parent")).toBe("Parent");
+    expect(reviewerRoleLabel("coach")).toBe("Coach");
+    expect(reviewerRoleLabel("other")).toBe("Attendee");
   });
 });

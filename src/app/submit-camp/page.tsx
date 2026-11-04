@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { SubmitCampForm } from "@/components/SubmitCampForm";
 
-export const metadata: Metadata = { title: "Submit a camp", description: "Tell us about a college recruiting camp or showcase that's missing from Camp Check." };
+export const metadata: Metadata = { title: "Submit a camp", description: "Tell us about a college recruiting camp or showcase that's missing from Camp Check.", alternates: { canonical: "/submit-camp" } };
 
 export default function SubmitCampPage() {
   return (

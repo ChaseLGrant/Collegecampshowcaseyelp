@@ -16,10 +16,16 @@ import { hasFeature } from "@/lib/billing/entitlements";
 import { saveCamp } from "@/lib/actions/saved-lists";
 import { provenanceLabel } from "@/lib/external-reviews/rights";
 import { formatDate, formatDateRange, formatPrice, locationLabel } from "@/lib/format";
-import { RATING_CATEGORIES, ratingDisplay } from "@/lib/ratings";
+import { RATING_CATEGORIES } from "@/lib/ratings";
+import { reviewerRoleLabel } from "@/lib/reviews/anonymous";
 import { safeHttpUrl } from "@/lib/security/urls";
 import { getCurrentAccess } from "@/lib/server/access";
-import { campJsonLd, campPageTitle, jsonLdScript } from "@/lib/seo/jsonld";
+import { breadcrumbJsonLd, campJsonLd, campMetaDescription, campPageTitle, jsonLdScript } from "@/lib/seo/jsonld";
+import { getHubIndex } from "@/lib/seo/hub-data";
+import { MIN_LISTINGS_FOR_INDEXED_COLLEGE, MIN_LISTINGS_FOR_INDEXED_HUB, campsInScope, citySlug, collegePath, relatedCamps, sportCityPath, sportStatePath } from "@/lib/seo/hubs";
+import { pageMetadata } from "@/lib/seo/meta";
+import { CampCard } from "@/components/CampCard";
+import { stateName } from "@/lib/states";
 import { directoryPath, eventTypeLabel, sportLabel } from "@/lib/sports";
 import { OrgLogo } from "@/components/OrgLogo";
 
@@ -33,14 +39,9 @@ const SENTIMENT_CLASS = {
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const camp = await (await getVisitorRepository()).getCampBySlug((await params).slug);
-  if (!camp) return { title: "Camp not found" };
-  const rd = ratingDisplay(camp.stats);
-  return {
-    title: campPageTitle(camp),
-    description: `${camp.name}: ${formatDateRange(camp.startDate, camp.endDate)} in ${locationLabel(camp.city, camp.state)}. ${formatPrice(camp.priceCents)}. ${rd.kind === "none" ? "Be the first to review it." : `Community rating ${rd.label}.`}`,
-    alternates: { canonical: `/camps/${camp.slug}` },
-    robots: camp.isSample ? { index: false, follow: false } : undefined,
-  };
+  if (!camp) return { title: "Camp not found", robots: { index: false } };
+  const meta = pageMetadata({ title: campPageTitle(camp), description: campMetaDescription(camp), path: `/camps/${camp.slug}` });
+  return camp.isSample ? { ...meta, robots: { index: false, follow: false } } : meta;
 }
 
 export default async function CampPage({ params }: { params: Promise<Params> }) {
@@ -49,11 +50,22 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
   const camp = await repo.getCampBySlug(slug);
   if (!camp) notFound();
   const { access } = await getCurrentAccess();
-  const [reviews, external, research] = await Promise.all([
+  const [reviews, external, research, hubs] = await Promise.all([
     repo.listReviews(camp.id),
     repo.listExternalReviews(camp.id),
     repo.getResearchSummary(camp.id, access.tier),
+    getHubIndex(),
   ]);
+  const related = relatedCamps(hubs, camp, 6);
+  const hasSportHub = camp.sport !== "other";
+  const stateHub = hasSportHub && camp.state && stateName(camp.state) ? sportStatePath(camp.sport, camp.state) : null;
+  const stateCount = stateHub ? campsInScope(hubs, { sport: camp.sport, state: camp.state! }).length : 0;
+  const cityCount = stateHub && camp.city ? campsInScope(hubs, { sport: camp.sport, state: camp.state!, city: citySlug(camp.city) }).length : 0;
+  const collegeCount = camp.institutionSlug ? campsInScope(hubs, { college: camp.institutionSlug }).length : 0;
+  const crumbs = [{ name: "Camp Check", path: "/" }];
+  if (hasSportHub) crumbs.push({ name: `${sportLabel(camp.sport)} camps`, path: directoryPath(camp.sport) });
+  if (stateHub) crumbs.push({ name: stateName(camp.state), path: stateHub });
+  crumbs.push({ name: camp.name, path: `/camps/${camp.slug}` });
   const canSeeResearch = hasFeature(access, "premium_research");
   const ld = campJsonLd(camp);
   const reg = safeHttpUrl(camp.registrationUrl);
@@ -66,10 +78,12 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
     <>
       <SampleBanner mode={repo.mode} />
       {ld && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(ld) }} />}
+      {!camp.isSample && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbJsonLd(crumbs)) }} />}
       <div className="container-page py-6">
         <nav aria-label="Breadcrumb" className="text-sm muted">
           <Link href="/" className="hover:text-brand">Home</Link> /{" "}
-          {camp.sport !== "other" ? <Link href={directoryPath(camp.sport)} className="hover:text-brand">{sportLabel(camp.sport)} camps</Link> : "Other sports"} / {camp.name}
+          {hasSportHub ? <Link href={directoryPath(camp.sport)} className="hover:text-brand">{sportLabel(camp.sport)} camps</Link> : "Other sports"} /{" "}
+          {stateHub && <><Link href={stateHub} className="hover:text-brand">{stateName(camp.state)}</Link> / </>}{camp.name}
         </nav>
 
         <header className="mt-3 grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -187,7 +201,7 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 id="community-h" className="h2">Camp Check Community Reviews</h2>
-              <p className="text-sm muted">Authentic, first-hand reviews from parents and attendees. Separate from the Camp Check Editor Rating.</p>
+              <p className="text-sm muted">Anonymous, first-hand reviews from parents, athletes and coaches. Reviewer names are never shown. Separate from the Camp Check Editor Rating.</p>
             </div>
             <Link href={`/camps/${camp.slug}/review`} className="btn-primary">Write a review</Link>
           </div>
@@ -213,11 +227,9 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
                       <p className="font-semibold">{r.title}</p>
                     </div>
                     <p className="mt-1 text-xs muted">
-                      {r.authorName && <span className="font-medium text-navy-700">{r.authorName} · </span>}
-                      <span className="tag mr-1 bg-navy-50 text-navy-700">{r.isGuest ? "Guest" : "Member"}</span>
-                      {r.attendeeRole === "parent" ? "Parent" : r.attendeeRole === "athlete" ? "Athlete" : r.attendeeRole === "coach" ? "Coach" : "Attendee"}
-                      {r.attendedYear ? ` · attended ${r.attendedYear}` : ""} · {formatDate(r.createdAt)}
-                      {r.verified && <span className="ml-1 tag bg-emerald-50 text-emerald-800">Verified attendance</span>}
+                      <span className="font-medium text-navy-700">{reviewerRoleLabel(r.attendeeRole)}</span>
+                      {r.attendedYear ? ` · Attended ${r.attendedYear}` : ""} · {formatDate(r.createdAt)}
+                      {r.verified && <span className="ml-1 tag bg-emerald-50 text-emerald-800">Verified attendee</span>}
                     </p>
                     <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{r.body}</p>
                     <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs muted">
@@ -312,6 +324,29 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
             </div>
           )}
         </section>
+        {/* Related listings and hub links (internal linking) */}
+        {(related.length > 0 || hasSportHub) && (
+          <section className="mt-10" aria-labelledby="related-h">
+            <h2 id="related-h" className="h2">Related camps</h2>
+            {related.length > 0 && (
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {related.map((c) => <CampCard key={c.id} camp={c} showSport={c.sport !== camp.sport} />)}
+              </div>
+            )}
+            <ul className="mt-4 flex flex-wrap gap-2 text-sm">
+              {camp.institutionSlug && camp.institutionName && collegeCount >= MIN_LISTINGS_FOR_INDEXED_COLLEGE && (
+                <li><Link className="chip-off py-1" href={collegePath(camp.institutionSlug)}>All {camp.institutionName} camps</Link></li>
+              )}
+              {stateHub && camp.city && cityCount >= MIN_LISTINGS_FOR_INDEXED_HUB && (
+                <li><Link className="chip-off py-1" href={sportCityPath(camp.sport, camp.state!, camp.city)}>{sportLabel(camp.sport)} camps in {camp.city}</Link></li>
+              )}
+              {stateHub && stateCount >= MIN_LISTINGS_FOR_INDEXED_HUB && (
+                <li><Link className="chip-off py-1" href={stateHub}>{sportLabel(camp.sport)} camps in {stateName(camp.state)}</Link></li>
+              )}
+              {hasSportHub && <li><Link className="chip-off py-1" href={directoryPath(camp.sport)}>All {sportLabel(camp.sport).toLowerCase()} camps</Link></li>}
+            </ul>
+          </section>
+        )}
       </div>
     </>
   );

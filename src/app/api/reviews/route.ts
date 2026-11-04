@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { asUser, getSql, isUniqueViolation } from "@/lib/db";
-import { guestEmailFor, guestFieldsSchema, shortDisplayName } from "@/lib/reviews/guest";
+import { guestEmailFor, guestFieldsSchema } from "@/lib/reviews/guest";
 import { reviewInputSchema, assessSpam, bodyFingerprint } from "@/lib/reviews/validation";
 import { clientIp, rateLimit } from "@/lib/security/rate-limit";
 import { hashIp } from "@/lib/security/hmac";
@@ -36,7 +36,6 @@ export async function POST(req: Request) {
   if (user) {
     if (!rateLimit(`review:user:${user.id}`, 5, 3600_000).ok) return json({ error: "Too many submissions. Try again later." }, 429);
   } else {
-    if (!input.guestName) return json({ errors: ["Add your name so other families know who wrote the review."] }, 400);
     if (turnstileEnabled()) {
       const ts = await verifyTurnstile(input.turnstileToken, { remoteIp: ip });
       if (!ts.ok) return json({ errors: [TURNSTILE_FAILED_MESSAGE] }, 403);
@@ -92,12 +91,12 @@ export async function POST(req: Request) {
 
     // Guest: create a sign-in-proof guest user and its review in ONE transaction, then write the
     // review as that user (app.user_id) so reviews_content_guard still holds.
-    const guestName = input.guestName!;
-    const displayName = shortDisplayName(guestName) ?? guestName.slice(0, 60);
+    // Anonymous reviews: a name is optional and private (moderation only). Older clients may still send one.
+    const guestName = input.guestName ?? null;
     const row = await sql.begin(async (tx) => {
       const [g] = await tx<{ id: string }[]>`
         insert into users (email, name, is_guest) values (${guestEmailFor(randomUUID())}, ${guestName}, true) returning id`;
-      await tx`update profiles set display_name = ${displayName}, age_confirmed_at = now() where id = ${g.id}`;
+      await tx`update profiles set age_confirmed_at = now() where id = ${g.id}`;
       await tx`select set_config('app.user_id', ${g.id}, true)`;
       const [r] = await tx<{ id: string; status: string }[]>`
         insert into reviews (camp_id, user_id, attendee_role, attended_year, rating_value, rating_instruction, rating_exposure,

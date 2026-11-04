@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Recruiting Insider & Insider Elite",
   description: "Free camp search and community reviews for everyone. Upgrade for premium research, comparisons and personalized camp matching.",
+  alternates: { canonical: "/pricing" },
 };
 
 export default async function PricingPage({ searchParams }: { searchParams: Promise<{ checkout?: string }> }) {

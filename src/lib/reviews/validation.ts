@@ -5,7 +5,7 @@ const currentYear = new Date().getUTCFullYear();
 
 export const reviewInputSchema = z.object({
   campId: z.string().uuid(),
-  attendeeRole: z.enum(["parent", "athlete", "coach", "other"]),
+  attendeeRole: z.enum(["parent", "athlete", "coach"], { errorMap: () => ({ message: "Choose Parent, Athlete or Coach" }) }),
   attendedYear: z.coerce.number().int().min(2000).max(currentYear).optional(),
   ratings: z.object({
     value: rating,

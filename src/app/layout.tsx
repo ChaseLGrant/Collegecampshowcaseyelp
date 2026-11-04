@@ -3,14 +3,17 @@ import "./globals.css";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { env } from "@/lib/env";
+import { jsonLdScript, siteJsonLd } from "@/lib/seo/jsonld";
 
 export const metadata: Metadata = {
   metadataBase: new URL(env.siteUrl),
   title: { default: "Camp Check — Find Camps Worth Your Money", template: "%s | Camp Check" },
   description: "Real reviews, independent research, and recruiting camp intelligence—all in one place. Compare college prospect camps, ID camps and showcases before you spend.",
-  openGraph: { siteName: "Camp Check", type: "website", images: [{ url: "/brand/icon-512.png", width: 512, height: 512, alt: "Camp Check by The Athlete Market" }] },
-  twitter: { card: "summary", title: "Camp Check — Find Camps Worth Your Money", images: ["/brand/icon-512.png"] },
+  openGraph: { siteName: "Camp Check", type: "website", title: "Camp Check — Find Camps Worth Your Money", description: "Compare college prospect camps, ID camps and showcases by dates, cost and host program before you spend.", images: [{ url: "/brand/icon-512.png", width: 512, height: 512, alt: "Camp Check by The Athlete Market" }] },
+  twitter: { card: "summary", title: "Camp Check — Find Camps Worth Your Money", description: "Compare college prospect camps, ID camps and showcases by dates, cost and host program before you spend.", images: ["/brand/icon-512.png"] },
   applicationName: "Camp Check",
+  // Google Search Console HTML-tag verification: set GOOGLE_SITE_VERIFICATION in Vercel to the token Google gives.
+  ...(process.env.GOOGLE_SITE_VERIFICATION ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } } : {}),
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0A0A0A" };
@@ -19,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="min-h-screen font-sans">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(siteJsonLd()) }} />
         <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-white focus:p-2">Skip to content</a>
         <Header />
         <main id="main">{children}</main>
