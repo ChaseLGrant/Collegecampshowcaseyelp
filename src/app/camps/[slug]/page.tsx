@@ -28,6 +28,7 @@ import { CampCard } from "@/components/CampCard";
 import { stateName } from "@/lib/states";
 import { directoryPath, eventTypeLabel, sportLabel } from "@/lib/sports";
 import { OrgLogo } from "@/components/OrgLogo";
+import { resolveCampLogo } from "@/lib/logos";
 
 type Params = { slug: string };
 
@@ -40,7 +41,12 @@ const SENTIMENT_CLASS = {
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const camp = await (await getVisitorRepository()).getCampBySlug((await params).slug);
   if (!camp) return { title: "Camp not found", robots: { index: false } };
-  const meta = pageMetadata({ title: campPageTitle(camp), description: campMetaDescription(camp), path: `/camps/${camp.slug}` });
+  const logo = resolveCampLogo(camp);
+  const meta = pageMetadata({
+    title: campPageTitle(camp), description: campMetaDescription(camp), path: `/camps/${camp.slug}`,
+    // Share preview uses the host program's real logo when we have one on file.
+    image: logo.kind === "local" && logo.src.startsWith("/") ? { url: logo.src, alt: `${logo.label} logo` } : undefined,
+  });
   return camp.isSample ? { ...meta, robots: { index: false, follow: false } } : meta;
 }
 
@@ -64,7 +70,8 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
   const collegeCount = camp.institutionSlug ? campsInScope(hubs, { college: camp.institutionSlug }).length : 0;
   const crumbs = [{ name: "Camp Check", path: "/" }];
   if (hasSportHub) crumbs.push({ name: `${sportLabel(camp.sport)} camps`, path: directoryPath(camp.sport) });
-  if (stateHub) crumbs.push({ name: stateName(camp.state), path: stateHub });
+  // Structured breadcrumbs only point at hubs that are indexable (noindex thin hubs stay out).
+  if (stateHub && stateCount >= MIN_LISTINGS_FOR_INDEXED_HUB) crumbs.push({ name: stateName(camp.state), path: stateHub });
   crumbs.push({ name: camp.name, path: `/camps/${camp.slug}` });
   const canSeeResearch = hasFeature(access, "premium_research");
   const ld = campJsonLd(camp);

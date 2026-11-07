@@ -7,14 +7,19 @@ export const DEFAULT_OG_IMAGE = { url: "/brand/icon-512.png", width: 512, height
  * Per-page metadata with canonical, Open Graph and Twitter tags.
  * Next.js replaces (not merges) openGraph/twitter objects per page, so every page sets them in full.
  */
-export function pageMetadata(o: { title: string; description: string; path: string; noindex?: boolean; ogType?: "website" | "article" }): Metadata {
+export function pageMetadata(o: {
+  title: string; description: string; path: string; noindex?: boolean; ogType?: "website" | "article";
+  /** Page-specific share image (site-relative or absolute). Falls back to the Camp Check icon. */
+  image?: { url: string; alt: string };
+}): Metadata {
+  const image = o.image ? { url: o.image.url, alt: o.image.alt } : DEFAULT_OG_IMAGE;
   return {
     title: { absolute: o.title },
     description: o.description,
     alternates: { canonical: o.path },
     robots: o.noindex ? { index: false, follow: true } : undefined,
-    openGraph: { type: o.ogType ?? "website", siteName: SITE_NAME, title: o.title, description: o.description, url: o.path, images: [DEFAULT_OG_IMAGE] },
-    twitter: { card: "summary", title: o.title, description: o.description, images: [DEFAULT_OG_IMAGE.url] },
+    openGraph: { type: o.ogType ?? "website", siteName: SITE_NAME, title: o.title, description: o.description, url: o.path, images: [image] },
+    twitter: { card: "summary", title: o.title, description: o.description, images: [image.url] },
   };
 }
 

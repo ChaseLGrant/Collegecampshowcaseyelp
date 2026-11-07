@@ -12,7 +12,9 @@ import { breadcrumbJsonLd, jsonLdScript } from "@/lib/seo/jsonld";
 import { SPORTS, directoryPath, sportLabel, type SportId } from "@/lib/sports";
 import { stateName, stateSlug } from "@/lib/states";
 import { getHubIndex } from "@/lib/seo/hub-data";
-import { campsInScope, cityHubs, collegeHubs, hubIntro, stateHubs } from "@/lib/seo/hubs";
+import { campsInScope, cityHubs, collegeHubs, hubIntro, pastCampsInScope, stateHubs } from "@/lib/seo/hubs";
+import { hasQueryParams } from "@/lib/seo/meta";
+import { formatDate } from "@/lib/format";
 
 const INTROS: Partial<Record<SportId, string>> = {
   baseball: "Compare college baseball prospect camps, showcases and ID camps by cost, location, verified school level and first-hand reviews from families who attended.",
@@ -44,6 +46,10 @@ export async function SportDirectory({ sport, state, searchParams }: {
   const hrefs: Record<string, string> = { all: "/search?sport=all" };
   SPORTS.forEach((s) => (hrefs[s.id] = s.id === "other" ? "/search?sport=other" : directoryPath(s.id)));
   const label = sportLabel(sport);
+  // On the clean (unfiltered, page 1) hub, link every listing directly so no camp page depends on
+  // noindexed pagination to be discovered.
+  const showIndexLinks = !hasQueryParams(searchParams);
+  const past = showIndexLinks ? pastCampsInScope(hubs, { sport, state: state ?? undefined }) : [];
   const crumbs = [{ name: "Camp Check", path: "/" }, { name: `${label} camps`, path: directoryPath(sport) }];
   if (state) crumbs.push({ name: stateName(state), path: basePath });
 
@@ -76,6 +82,32 @@ export async function SportDirectory({ sport, state, searchParams }: {
               {collegeLinks.map((c) => <li key={c.slug}><Link href={c.path} className="chip-off py-1">{c.name}</Link></li>)}
             </ul>
           </section>
+        )}
+        {showIndexLinks && scoped.length > 0 && (
+          <section className="mt-10" aria-labelledby="all-camps-h">
+            <h2 id="all-camps-h" className="h2">All upcoming {label.toLowerCase()} camps{state ? ` in ${stateName(state)}` : ""} ({scoped.length})</h2>
+            <ul className="mt-3 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2 lg:grid-cols-3">
+              {scoped.map((c) => (
+                <li key={c.id}>
+                  <Link href={`/camps/${c.slug}`} className="link">{c.name}</Link>
+                  {c.startDate && <span className="muted"> · {formatDate(c.startDate)}</span>}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        {past.length > 0 && (
+          <details className="mt-6 text-sm">
+            <summary className="cursor-pointer font-semibold">Past {label.toLowerCase()} events{state ? ` in ${stateName(state)}` : ""} ({past.length})</summary>
+            <ul className="mt-3 grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
+              {past.map((c) => (
+                <li key={c.id}>
+                  <Link href={`/camps/${c.slug}`} className="link">{c.name}</Link>
+                  {c.startDate && <span className="muted"> · {formatDate(c.startDate)}</span>}
+                </li>
+              ))}
+            </ul>
+          </details>
         )}
         <div className="mx-auto mt-10 max-w-xl">
           <LeadCaptureForm variant="alerts" sport={sport} sourcePage={basePath} enabled={databaseConfigured()} />
