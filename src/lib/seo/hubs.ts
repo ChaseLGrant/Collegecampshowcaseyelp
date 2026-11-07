@@ -58,6 +58,13 @@ export function campsInScope(index: HubIndex, s: HubScope, pool: CampSummary[] =
     (!s.college || c.institutionSlug === s.college));
 }
 
+/** Published listings in scope whose dates have passed (kept as pages; linked so crawlers can still reach them). */
+export function pastCampsInScope(index: HubIndex, s: HubScope): CampSummary[] {
+  return campsInScope(index, s, index.all)
+    .filter((c) => c.status === "published" && !isUpcoming(c, index.today))
+    .sort((a, b) => (b.startDate ?? "").localeCompare(a.startDate ?? ""));
+}
+
 function countBy<T>(items: T[], key: (t: T) => string | null | undefined): Map<string, number> {
   const m = new Map<string, number>();
   for (const it of items) {
