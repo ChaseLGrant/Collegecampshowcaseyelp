@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { getSessionUser } from "@/lib/server/auth";
-import { authConfigured } from "@/lib/env";
+import { HeaderAccount } from "./HeaderAccount";
 
-export async function Header() {
-  const user = authConfigured() ? await getSessionUser() : null;
+/** No per-visitor reads here: the root layout stays static so public pages can be cached (ISR). */
+export function Header() {
   return (
     <header className="border-b border-navy-100 bg-white">
       <div className="container-page flex h-14 items-center justify-between gap-4">
@@ -19,14 +18,7 @@ export async function Header() {
           <Link href="/search" className="btn-ghost hidden px-3 sm:inline-flex">Browse</Link>
           <Link href="/compare" className="btn-ghost hidden px-3 sm:inline-flex">Compare</Link>
           <Link href="/pricing" className="btn-ghost px-3">Insider</Link>
-          {user ? (
-            <>
-              {(user.role === "admin" || user.role === "moderator") && <Link href="/admin" className="btn-ghost px-3">Admin</Link>}
-              <Link href="/account" className="btn-secondary px-3 py-2">Account</Link>
-            </>
-          ) : (
-            <Link href="/login" className="btn-secondary px-3 py-2">Sign in</Link>
-          )}
+          <HeaderAccount />
         </nav>
       </div>
     </header>

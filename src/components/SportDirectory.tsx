@@ -12,6 +12,7 @@ import { breadcrumbJsonLd, jsonLdScript } from "@/lib/seo/jsonld";
 import { SPORTS, directoryPath, sportLabel, type SportId } from "@/lib/sports";
 import { stateName, stateSlug } from "@/lib/states";
 import { getHubIndex } from "@/lib/seo/hub-data";
+import { cachedFilterOptions, cachedSearch } from "@/lib/seo/directory-data";
 import { campsInScope, cityHubs, collegeHubs, hubIntro, stateHubs } from "@/lib/seo/hubs";
 
 const INTROS: Partial<Record<SportId, string>> = {
@@ -29,7 +30,12 @@ export async function SportDirectory({ sport, state, searchParams }: {
 }) {
   const filters = parseSearchFilters({ ...searchParams, sport, state: state ?? (searchParams.state as string | undefined) });
   const repo = await getPublicRepository();
-  const [result, options, hubs] = await Promise.all([repo.searchCamps(filters), repo.getFilterOptions(sport), getHubIndex()]);
+  const live = repo.mode === "live";
+  const [result, options, hubs] = await Promise.all([
+    live ? cachedSearch(filters) : repo.searchCamps(filters),
+    live ? cachedFilterOptions(sport) : repo.getFilterOptions(sport),
+    getHubIndex(),
+  ]);
   const scoped = campsInScope(hubs, { sport, state: state ?? undefined });
   const intro = hubIntro(scoped, {
     noun: `${sportLabel(sport).toLowerCase()} camps, showcases and college prospect events`,

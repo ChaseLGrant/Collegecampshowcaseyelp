@@ -9,8 +9,7 @@ import { getPublicRepository } from "@/lib/data";
 import { databaseConfigured } from "@/lib/env";
 import { parseSearchFilters } from "@/lib/search";
 import { EDITORIAL_EXPLAINER } from "@/lib/editorial";
-import { getStickySport } from "@/lib/server/sticky-sport";
-import { DIRECTORY_SPORTS, SPORTS, directoryPath, sportLabel } from "@/lib/sports";
+import { DIRECTORY_SPORTS, SPORTS, directoryPath, sportLabel, type SportId } from "@/lib/sports";
 import { getHubIndex } from "@/lib/seo/hub-data";
 import { cityHubs, collegeHubs, stateHubs } from "@/lib/seo/hubs";
 import { pageMetadata } from "@/lib/seo/meta";
@@ -21,8 +20,13 @@ export const metadata: Metadata = pageMetadata({
   path: "/",
 });
 
+// Cached (ISR): the same page for every visitor, re-rendered at most hourly. (It used to tailor
+// itself to the visitor's remembered-sport cookie, which made every hit a server render; sport
+// directories and the chips below remain one click away.)
+export const revalidate = 3600;
+
 export default async function HomePage() {
-  const sport = await getStickySport();
+  const sport = null as SportId | null;
   const repo = await getPublicRepository();
   const [picks, upcoming, counts, hubs] = await Promise.all([
     repo.searchCamps(parseSearchFilters({ sort: "editorial", editorsPick: "1", pageSize: "6" }, sport)),

@@ -12,14 +12,13 @@ import { ReportReview } from "@/components/ReportReview";
 import { SampleBanner } from "@/components/SampleBanner";
 import { Stars } from "@/components/Stars";
 import { getVisitorRepository } from "@/lib/data";
-import { hasFeature } from "@/lib/billing/entitlements";
-import { saveCamp } from "@/lib/actions/saved-lists";
+import { CampResearch } from "@/components/CampResearch";
+import { SaveCampButton } from "@/components/SaveCampButton";
 import { provenanceLabel } from "@/lib/external-reviews/rights";
 import { formatDate, formatDateRange, formatPrice, locationLabel } from "@/lib/format";
 import { RATING_CATEGORIES } from "@/lib/ratings";
 import { reviewerRoleLabel } from "@/lib/reviews/anonymous";
 import { safeHttpUrl } from "@/lib/security/urls";
-import { getCurrentAccess } from "@/lib/server/access";
 import { breadcrumbJsonLd, campJsonLd, campMetaDescription, campPageTitle, jsonLdScript } from "@/lib/seo/jsonld";
 import { getHubIndex } from "@/lib/seo/hub-data";
 import { MIN_LISTINGS_FOR_INDEXED_COLLEGE, MIN_LISTINGS_FOR_INDEXED_HUB, campsInScope, citySlug, collegePath, relatedCamps, sportCityPath, sportStatePath } from "@/lib/seo/hubs";
@@ -30,6 +29,14 @@ import { directoryPath, eventTypeLabel, sportLabel } from "@/lib/sports";
 import { OrgLogo } from "@/components/OrgLogo";
 
 type Params = { slug: string };
+
+// Cached (ISR): the page is identical for every visitor and re-rendered at most hourly
+// (admin changes purge it immediately). Per-visitor parts (save button, premium research)
+// load in the browser.
+export const revalidate = 3600;
+export async function generateStaticParams(): Promise<Params[]> {
+  return []; // render each camp on first visit, then serve it from cache
+}
 
 const SENTIMENT_LABEL = { positive: "Mostly positive", mixed: "Mixed", negative: "Mostly negative", neutral: "Neutral" } as const;
 const SENTIMENT_CLASS = {
@@ -49,11 +56,10 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
   const repo = await getVisitorRepository();
   const camp = await repo.getCampBySlug(slug);
   if (!camp) notFound();
-  const { access } = await getCurrentAccess();
   const [reviews, external, research, hubs] = await Promise.all([
     repo.listReviews(camp.id),
     repo.listExternalReviews(camp.id),
-    repo.getResearchSummary(camp.id, access.tier),
+    repo.getResearchSummary(camp.id, "free"),
     getHubIndex(),
   ]);
   const related = relatedCamps(hubs, camp, 6);
@@ -66,7 +72,6 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
   if (hasSportHub) crumbs.push({ name: `${sportLabel(camp.sport)} camps`, path: directoryPath(camp.sport) });
   if (stateHub) crumbs.push({ name: stateName(camp.state), path: stateHub });
   crumbs.push({ name: camp.name, path: `/camps/${camp.slug}` });
-  const canSeeResearch = hasFeature(access, "premium_research");
   const ld = campJsonLd(camp);
   const reg = safeHttpUrl(camp.registrationUrl);
   const src = safeHttpUrl(camp.sourceUrl);
@@ -129,13 +134,7 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
               )}
               <Link href={`/camps/${camp.slug}/review`} className="btn-secondary">Write a review</Link>
               <CompareButton slug={camp.slug} />
-              {hasFeature(access, "saved_lists") && !camp.isSample && (
-                <form action={saveCamp}>
-                  <input type="hidden" name="campId" value={camp.id} />
-                  <input type="hidden" name="slug" value={camp.slug} />
-                  <button className="btn-ghost w-full">☆ Save to my camps</button>
-                </form>
-              )}
+              {!camp.isSample && <SaveCampButton campId={camp.id} slug={camp.slug} />}
             </div>
             <p className="mt-3 text-xs muted">
               Facts are {factKind === "verified" ? "verified against" : "as advertised by"} the source{src ? <> — <a className="link" href={src} target="_blank" rel="noopener noreferrer nofollow">view source</a></> : ""}. Confirm details with the organizer before paying.
@@ -293,36 +292,7 @@ export default async function CampPage({ params }: { params: Promise<Params> }) 
         <section className="mt-10" aria-labelledby="research-h">
           <h2 id="research-h" className="h2">Camp Check Research Summary</h2>
           <p className="text-sm muted">AI-assisted synthesis of verifiable information, reviewed by Camp Check staff. This is research, not a first-hand review.</p>
-          {research ? (
-            <div className="card mt-4 p-5">
-              <p className="leading-relaxed">{research.summary.replace(/\s*\[F\d+\]/g, "")}</p>
-              {research.considerations.length > 0 && (
-                <>
-                  <p className="mt-4 font-semibold">Things to weigh</p>
-                  <ul className="mt-1 list-disc space-y-1 pl-5 text-sm">{research.considerations.map((c) => <li key={c}>{c}</li>)}</ul>
-                </>
-              )}
-              <details className="mt-4 text-sm">
-                <summary className="cursor-pointer font-medium">Sources used ({research.facts.length})</summary>
-                <ul className="mt-2 space-y-1">
-                  {research.facts.map((f) => (
-                    <li key={f.id} className="text-xs">
-                      <span className="font-mono text-navy-300">{f.id}</span> {f.text}{" "}
-                      {f.sourceUrl && safeHttpUrl(f.sourceUrl) && <a className="link" href={safeHttpUrl(f.sourceUrl)!} target="_blank" rel="noopener noreferrer nofollow">source</a>}
-                    </li>
-                  ))}
-                </ul>
-              </details>
-              <p className="mt-3 text-xs muted">{research.method === "ai_assisted" ? "Drafted with AI from the cited facts and approved by Camp Check staff" : "Compiled from the cited facts"} · {formatDate(research.generatedAt)}</p>
-            </div>
-          ) : canSeeResearch ? (
-            <p className="mt-3 text-sm muted">Research for this event is in progress.</p>
-          ) : (
-            <div className="card mt-4 flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm">Premium research summaries — tradeoffs, verified college attendance and cost context — are included with <span className="font-semibold">Recruiting Insider</span>.</p>
-              <Link href="/pricing" className="btn-secondary shrink-0">See Insider</Link>
-            </div>
-          )}
+          <CampResearch slug={camp.slug} initial={research} isSample={!!camp.isSample} />
         </section>
         {/* Related listings and hub links (internal linking) */}
         {(related.length > 0 || hasSportHub) && (

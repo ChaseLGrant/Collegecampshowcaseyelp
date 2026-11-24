@@ -1,0 +1,9 @@
+# Netlify build settings for Camp Check (thecampcheck.com). Next.js runs on Netlify's
+# OpenNext adapter (@netlify/plugin-nextjs), detected automatically.
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NEXT_TELEMETRY_DISABLED = "1"

@@ -12,6 +12,12 @@ import { directoryPath, sportLabel, type SportId } from "@/lib/sports";
 
 type Params = { slug: string };
 
+// Cached (ISR): re-rendered at most hourly; hubs data comes from the cached hub index.
+export const revalidate = 3600;
+export async function generateStaticParams(): Promise<Params[]> {
+  return []; // render on first visit, then serve from cache
+}
+
 async function resolve(params: Promise<Params>) {
   const { slug } = await params;
   const index = await getHubIndex();

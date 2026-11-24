@@ -5,6 +5,9 @@ import { collegeHubs } from "@/lib/seo/hubs";
 import { breadcrumbJsonLd, jsonLdScript } from "@/lib/seo/jsonld";
 import { pageMetadata } from "@/lib/seo/meta";
 
+// Cached (ISR): re-rendered at most hourly; hubs data comes from the cached hub index.
+export const revalidate = 3600;
+
 export const metadata: Metadata = pageMetadata({
   title: "College Camps by School | Prospect Camps & ID Camps | Camp Check",
   description: "Browse upcoming college prospect camps, ID camps and clinics by host school, with dates, costs and registration links.",

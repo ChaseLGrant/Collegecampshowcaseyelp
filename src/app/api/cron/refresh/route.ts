@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { revalidateTag } from "next/cache";
 import { makeIngestionStore, mapSourceRow } from "@/lib/admin/ingestion-store";
 import { athleteMarketConfigured } from "@/lib/env";
 import { runSource } from "@/lib/ingestion/pipeline";
@@ -6,6 +7,7 @@ import { STALE_AFTER_DAYS } from "@/lib/ingestion/staleness";
 import { json } from "@/lib/server/http";
 import { syncAthleteMarketAccount } from "@/lib/server/entitlement-sync";
 import { getSql } from "@/lib/db";
+import { HUBS_TAG } from "@/lib/seo/hub-data";
 
 export const maxDuration = 300;
 const TIME_BUDGET_MS = 240_000;
@@ -56,5 +58,8 @@ export async function GET(req: Request) {
     }
     report.athleteMarketSynced = synced;
   }
+
+  // 4) New/updated listings: drop the cached hub index so hubs, footer and related camps pick them up.
+  revalidateTag(HUBS_TAG);
   return json({ ok: true, ...report });
 }

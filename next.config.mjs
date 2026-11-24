@@ -15,8 +15,9 @@ const nextConfig = {
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },
-      // Keep preview / *.vercel.app copies of the site out of search results (thecampcheck.com is canonical).
+      // Keep preview / *.vercel.app / *.netlify.app copies of the site out of search results (thecampcheck.com is canonical).
       { source: "/:path*", has: [{ type: "host", value: "(?<sub>.*)\\.vercel\\.app" }], headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+      { source: "/:path*", has: [{ type: "host", value: "(?<sub>.*)\\.netlify\\.app" }], headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
     ];
   },
 };

@@ -1,5 +1,5 @@
 "use server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { approveQueueItem } from "../admin/approve";
@@ -17,6 +17,12 @@ import { audit, requireStaff } from "../server/auth";
 import { EVENT_TYPE_IDS, SPORT_IDS } from "../sports";
 import { deleteProof } from "../storage/proofs";
 
+/** Public pages are cached (ISR, 1h). After a moderation/catalog change, purge them so it shows now. */
+function refreshPublicPages() {
+  revalidateTag("hubs");
+  revalidatePath("/", "layout");
+}
+
 const uuid = z.string().uuid();
 const MAX_UPLOAD = 5 * 1024 * 1024;
 
@@ -32,6 +38,7 @@ export async function approveQueue(formData: FormData) {
   const campId = await approveQueueItem(db, id, user.id, { verifiedAgainstSource: formData.get("verified") === "on", overrides });
   await audit(user.id, "queue.approve", "discovery_queue", id, { campId });
   revalidatePath("/admin/discovery");
+  refreshPublicPages();
 }
 
 export async function rejectQueue(formData: FormData) {
@@ -42,6 +49,7 @@ export async function rejectQueue(formData: FormData) {
   await db`update discovery_queue set status = ${status}, reviewer_id = ${user.id}, reviewed_at = now(), notes = ${notes} where id = ${id} and status = 'pending'`;
   await audit(user.id, `queue.${status}`, "discovery_queue", id);
   revalidatePath("/admin/discovery");
+  refreshPublicPages();
 }
 
 /* ---------------- Source registry ---------------- */
@@ -100,6 +108,7 @@ export async function runSourceNow(formData: FormData) {
   const r = await runSource(mapSourceRow(data), makeIngestionStore(db), { triggeredBy: "admin" });
   await audit(user.id, "source.run", "sources", id, { status: r.status, queued: r.queued });
   revalidatePath("/admin/ingestion");
+  refreshPublicPages();
   redirect(`/admin/ingestion?source=${id}`);
 }
 
@@ -179,6 +188,7 @@ export async function updateCamp(formData: FormData) {
   if (Object.keys(patch).length) await db`update camps set ${db(patch as Record<string, any>)} where id = ${id}`;
   await audit(user.id, "camp.update", "camps", id, patch);
   revalidatePath("/admin/camps");
+  refreshPublicPages();
 }
 
 export async function verifyParticipatingCollege(formData: FormData) {
@@ -189,6 +199,7 @@ export async function verifyParticipatingCollege(formData: FormData) {
   await db`update camp_participating_colleges set verified = true, source_url = ${sourceUrl} where camp_id = ${campId} and institution_id = ${institutionId}`;
   await audit(user.id, "camp.verify_college", "camps", campId, { institutionId, sourceUrl });
   revalidatePath("/admin/camps");
+  refreshPublicPages();
 }
 
 /* ---------------- Community review moderation (moderators) ---------------- */
@@ -201,6 +212,7 @@ export async function moderateReview(formData: FormData) {
   if (formData.get("resolveReports") === "on") await db`update review_reports set resolved = true where review_id = ${id}`;
   await audit(user.id, `review.${status}`, "reviews", id);
   revalidatePath("/admin/reviews");
+  refreshPublicPages();
 }
 
 export async function verifyAttendance(formData: FormData) {
@@ -213,6 +225,7 @@ export async function verifyAttendance(formData: FormData) {
   if (data?.verification_file_path) await deleteProof(data.verification_file_path).catch((e) => console.error("proof delete failed:", (e as Error).message));
   await audit(user.id, `review.attendance_${verdict}`, "reviews", id);
   revalidatePath("/admin/reviews");
+  refreshPublicPages();
 }
 
 /* ---------------- External reviews ---------------- */
@@ -230,6 +243,7 @@ export async function reviewExternal(formData: FormData) {
     where id = ${id}`;
   await audit(user.id, `external_review.${decision}`, "external_reviews", id, { rights });
   revalidatePath("/admin/external-reviews");
+  refreshPublicPages();
 }
 
 /* ---------------- Research summaries ---------------- */
@@ -254,6 +268,7 @@ export async function generateResearch(formData: FormData) {
             ${draft.method}, ${draft.model ?? null}, ${tier}, 'draft')`;
   await audit(user.id, "research.generate", "camps", campId, { method: draft.method });
   revalidatePath("/admin/research");
+  refreshPublicPages();
 }
 
 export async function reviewResearch(formData: FormData) {
@@ -266,6 +281,7 @@ export async function reviewResearch(formData: FormData) {
   await db`update research_summaries set ${db(patch as Record<string, any>)} where id = ${id}`;
   await audit(user.id, `research.${decision}`, "research_summaries", id);
   revalidatePath("/admin/research");
+  refreshPublicPages();
 }
 
 /* ---------------- Plans ---------------- */
@@ -339,4 +355,5 @@ export async function addManualCandidate(formData: FormData) {
   const queued = items.length ? await store.enqueue(items) : 0;
   await store.finishRun(runId, { status: queued ? "succeeded" : "partial", found: 1, queued, skipped: 1 - queued, error: queued ? null : "Missing name or source URL, or a duplicate is already pending", log: [] });
   revalidatePath("/admin/discovery");
+  refreshPublicPages();
 }
