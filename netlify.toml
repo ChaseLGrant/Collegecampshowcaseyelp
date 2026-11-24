@@ -7,3 +7,7 @@
 [build.environment]
   NODE_VERSION = "22"
   NEXT_TELEMETRY_DISABLED = "1"
+
+# Declared explicitly: sites created through the API don't get the Next.js runtime auto-installed.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
